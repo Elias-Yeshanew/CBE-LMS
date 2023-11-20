@@ -8,4 +8,4 @@ import com.example.demo.lease.Model.FileEntity;
 @Repository
 public interface FileEntityRepository extends JpaRepository<FileEntity, Long> {
     // You can add custom query methods if needed
-}
+\}
