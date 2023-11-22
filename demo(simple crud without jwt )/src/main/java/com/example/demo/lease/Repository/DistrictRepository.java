@@ -9,5 +9,7 @@ import com.example.demo.lease.Model.Region;
 
 public interface DistrictRepository extends JpaRepository<District, Long> {
     List<District> findByRegion(Region region);
+
+    long count();
     // Add any other custom query methods if needed
 }

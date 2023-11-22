@@ -11,8 +11,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.lease.GenerateReportsRequestBody;
 import com.example.demo.lease.Model.Lease;
 import com.example.demo.lease.Repository.LeaseRepository;
+import com.example.demo.lease.Service.BranchService;
+import com.example.demo.lease.Service.DistrictService;
 import com.example.demo.lease.Service.LeaseService;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,12 +31,16 @@ import io.swagger.annotations.ApiOperation;
 public class LeaseController {
 
     private final LeaseService leaseService;
+    private final BranchService branchService;
+    private final DistrictService districtService;
 
     @Autowired
     private LeaseRepository leaseRepository;
 
-    public LeaseController(LeaseService leaseService) {
+    public LeaseController(LeaseService leaseService, BranchService branchService, DistrictService districtService) {
         this.leaseService = leaseService;
+        this.branchService = branchService;
+        this.districtService = districtService;
     }
 
     // @GetMapping("/byBranchId/{branchId}")
@@ -98,7 +105,7 @@ public class LeaseController {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Lease> addNewLease(@RequestBody Lease lease) throws Exception {
         try {
             Lease createdLease = leaseService.addNewLease(lease);
@@ -152,6 +159,16 @@ public class LeaseController {
         return leaseService.getUnauthorizedLeases();
     }
 
+    @GetMapping("/expiredLeases")
+    public List<Lease> getExpiredLeases() {
+        return leaseService.getAllExpiredLeases();
+    }
+
+    @GetMapping("/activeContracts")
+    public List<Lease> getAllActiveLeases() {
+        return leaseService.getAllActiveLeases();
+    }
+
     @PutMapping("/{id}/authorize")
     public void authorizeLease(@PathVariable("id") Long leaseId) throws NotFoundException {
         leaseService.authorizeLeaseById(leaseId);
@@ -192,11 +209,15 @@ public class LeaseController {
         long totalContracts = leaseService.getTotalContracts();
         long totalUnexpiredContracts = leaseService.getTotalUnexpiredContracts();
         long totalExpiredContracts = leaseService.getTotalExpiredContracts();
+        long totalNumberOfBranchs = branchService.getBranchCount();
+        long totalNUmberOfDistricts = districtService.getDistrictCount();
 
         Map<String, Long> contractInfo = new HashMap<>();
         contractInfo.put("totalContracts", totalContracts);
-        contractInfo.put("totalUnexpiredContracts", totalUnexpiredContracts);
-        contractInfo.put("totalExpiredContracts", totalExpiredContracts);
+        contractInfo.put("activeContracts", totalUnexpiredContracts);
+        contractInfo.put("expiredContracts", totalExpiredContracts);
+        contractInfo.put("totalNumberOfBranchs", totalNumberOfBranchs);
+        contractInfo.put("totalNUmberOfDistricts", totalNUmberOfDistricts);
         return contractInfo;
     }
 

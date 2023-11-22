@@ -8,7 +8,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.example.demo.lease.Model.Branch;
 import com.example.demo.lease.Model.FileEntity;
 import com.example.demo.lease.Model.Lease;
 import com.example.demo.lease.Repository.LeaseRepository;
@@ -67,6 +66,18 @@ public class LeaseService {
         return leaseRepository.findAllByAuthorizationFalse();
     }
 
+    public List<Lease> getAllExpiredLeases() {
+        LocalDate currentDate = LocalDate.now();
+        // LocalDate currentDate = LocalDate.of(2026, 1, 1);
+        return leaseRepository.findByContractEndDateBeforeAndAuthorizationIsTrue(currentDate);
+
+    }
+
+    public List<Lease> getAllActiveLeases() {
+        LocalDate currentDate = LocalDate.now();
+        return leaseRepository.findByContractEndDateAfterAndAuthorizationIsTrue(currentDate);
+    }
+
     public void authorizeLeaseById(Long leaseId) throws NotFoundException {
         Lease lease = leaseRepository.findById(leaseId)
                 .orElseThrow(() -> new NotFoundException());
@@ -90,17 +101,16 @@ public class LeaseService {
 
     public Lease addNewLease(Lease lease) throws Exception {
         System.out.println(lease);
-        Branch branch = lease.getBranch();
-        String add = branch.toString().substring(0, 3);
-        lease.setContractNumber(add + generateRandomAlphaNumeric());
-        String contractNumber = add + lease.getContractNumber();
+        // String add = lease.getBranch().getBranchName().substring(0, 3);
+        // lease.setContractNumber(add + generateRandomAlphaNumeric());
+        // String contractNumber = add + lease.getContractNumber();
         lease.setContractRegisteredDate(LocalDate.now());
 
         lease.setAuthorization(false);
-        if (leaseRepository.existsByContractNumber(contractNumber)) {
-            throw new IllegalArgumentException("A lease with contract number " +
-                    contractNumber + " already exists.");
-        }
+        // if (leaseRepository.existsByContractNumber(contractNumber)) {
+        // throw new IllegalArgumentException("A lease with contract number " +
+        // contractNumber + " already exists.");
+        // }
         return leaseRepository.save(lease);
     }
 
@@ -110,16 +120,16 @@ public class LeaseService {
     // }
 
     // // Log lease information
-    // String add = lease.getBranch().getBranchName().substring(0, 3);
-    // lease.setContractNumber(add + generateRandomAlphaNumeric());
-    // String contractNumber = add + lease.getContractNumber();
+    // // String add = lease.getBranch().getBranchName().substring(0, 3);
+    // // lease.setContractNumber(add + generateRandomAlphaNumeric());
+    // // String contractNumber = add + lease.getContractNumber();
     // lease.setContractRegisteredDate(LocalDate.now());
 
     // lease.setAuthorization(false);
-    // if (leaseRepository.existsByContractNumber(contractNumber)) {
-    // throw new IllegalArgumentException("A lease with contract number " +
-    // contractNumber + " already exists.");
-    // }
+    // // if (leaseRepository.existsByContractNumber(contractNumber)) {
+    // // throw new IllegalArgumentException("A lease with contract number " +
+    // // contractNumber + " already exists.");
+    // // }
 
     // // Handle file upload
     // if (file != null) {
@@ -196,8 +206,7 @@ public class LeaseService {
         String installmentDetails = report.getInstallmentDetails();
         Double initialDirectCost = initialDirectCostB.doubleValue();
         LocalDate contractRegisteredDate = report.getContractRegisteredDate();
-        double leasePayment = report.getLeasePayment();
-        double outstandingBalance = report.getOutstandingBalance();
+
         String contractType = report.getContractType();
         Double leaseLiablity = calculate.calculateLeaseLiability(totalPayment, advancePayment, discountRate, startDate,
                 endDate, installmentDetails);

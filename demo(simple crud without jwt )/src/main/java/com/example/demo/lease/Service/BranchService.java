@@ -17,4 +17,9 @@ public class BranchService {
     public Branch getBranchByPoliticalRegion(String politicalRegion) {
         return branchRepository.findByPoliticalRegion(politicalRegion);
     }
+
+    public long getBranchCount() {
+        return branchRepository.count();
+    }
+
 }

@@ -13,7 +13,7 @@ public class Branch {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "branch_id")
-    private Long id;
+    private Long branchId;
 
     @Column(name = "branch_name")
     private String branchName;
@@ -40,7 +40,7 @@ public class Branch {
     private List<Lease> leases;
 
     public Long getId() {
-        return id;
+        return branchId;
     }
 
     public String getBranchName() {
