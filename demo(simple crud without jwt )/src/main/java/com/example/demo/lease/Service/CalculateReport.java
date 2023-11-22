@@ -357,6 +357,7 @@ public class CalculateReport {
                 BigDecimal value = jsonObject.getBigDecimal(key);
                 LocalDate date = LocalDate.parse(key); // Parse the date string into a LocalDate
                 installmentMap.put(date, value);
+                System.out.println("date:" + date);
                 // numberOfInstallments += 1;
             }
 
@@ -573,4 +574,14 @@ public class CalculateReport {
     public static double calculateBalance(double balance, double leasePayment, double interest) {
         return balance - leasePayment + interest;
     }
+
+    private static double calculateInterestExpense(double outstandingLeaseLiability, double incrementalBorrowingRate) {
+        return outstandingLeaseLiability * incrementalBorrowingRate;
+    }
+
+    private static double updateLeaseLiability(double outstandingLeaseLiability, double interestExpense,
+            double principalRepayment) {
+        return outstandingLeaseLiability - interestExpense + principalRepayment;
+    }
+
 }
