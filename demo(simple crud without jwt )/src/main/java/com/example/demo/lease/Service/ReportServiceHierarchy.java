@@ -210,7 +210,6 @@ public class ReportServiceHierarchy {
     private Map<String, Object> createLeaseInfo(Lease lease) {
         Map<String, Object> leaseInfo = new HashMap<>();
         leaseInfo.put("ID", lease.getId());
-        leaseInfo.put("contractNumber", lease.getContractNumber());
         leaseInfo.put("Total Payment", lease.getTotalPayment());
         leaseInfo.put("Advance Payment", lease.getAdvancePayment());
         leaseInfo.put("Contract Start Date", lease.getContractStartDate());

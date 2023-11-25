@@ -16,7 +16,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Setter
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "lease")
 public class Lease {
@@ -24,9 +32,6 @@ public class Lease {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "contract_number", unique = true, nullable = false)
-    private String contractNumber;
 
     @Column(name = "discount_rate", nullable = false)
     private Double discountRate;
@@ -66,24 +71,18 @@ public class Lease {
     private String contractType;
 
     @ManyToOne
+    @JoinColumn(name = "branch_id")
     @JsonBackReference
-    @JoinColumn(name = "branch_id", referencedColumnName = "branch_id")
     private Branch branch;
 
-    // @JsonSerialize(using = FileEntitySerializer.class)
-    // @OneToOne(cascade = CascadeType.ALL)
-    // @JoinColumn(name = "file_Id", referencedColumnName = "file_Id")
-    // private FileEntity fileEntity;
-
-    public Lease(Long id, String contractNumber, Double discountRate, LocalDate contractStartDate,
+    public Lease(Long id, Double discountRate, LocalDate contractStartDate,
             LocalDate contractEndDate, BigDecimal totalPayment, BigDecimal advancePayment, BigDecimal initialDirectCost,
             BigDecimal leaseIncentive, int numberOfInstallments, boolean authorization, LocalDate advancePaymentDate,
             String installmentDetails, LocalDate contractRegisteredDate,
-            String contractType) {
+            String contractType, Branch branch) {
         this.id = id;
         this.totalPayment = totalPayment;
         this.advancePayment = advancePayment;
-        this.contractNumber = contractNumber;
         this.contractStartDate = contractStartDate;
         this.contractEndDate = contractEndDate;
         this.discountRate = discountRate;
@@ -94,10 +93,6 @@ public class Lease {
         this.installmentDetails = installmentDetails;
         this.contractRegisteredDate = contractRegisteredDate;
         this.contractType = contractType;
-
-    }
-
-    public Lease() {
 
     }
 
@@ -119,14 +114,6 @@ public class Lease {
 
     public boolean getAuthorization() {
         return authorization;
-    }
-
-    public String getContractNumber() {
-        return contractNumber;
-    }
-
-    public void setContractNumber(String contractNumber) {
-        this.contractNumber = contractNumber;
     }
 
     public Double getDiscountRate() {
@@ -229,57 +216,15 @@ public class Lease {
         this.branch = branch;
     }
 
-    private double leasePayment;
-
-    private double outstandingBalance;
-
-    public Double getOutstandingBalance() {
-        return outstandingBalance;
-    }
-
-    public void setOutstandingBalance(Double outstandingBalance) {
-        this.outstandingBalance = outstandingBalance;
-    }
-
-    public Double getLeasePayment() {
-        return leasePayment;
-    }
-
-    public void setLeasePayment(Double leasePayment) {
-        this.leasePayment = leasePayment;
-    }
-
-    // public FileEntity getFileEntity() {
-    // return fileEntity;
-    // }
-
-    // public void setFileEntity(FileEntity fileEntity) {
-    // this.fileEntity = fileEntity;
-
-    // }
-
-    @Column(name = "file_path")
-    private String filePath;
-
-    // Existing methods...
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
     @Override
     public String toString() {
-        return "Lease [id=" + id + ", contractNumber=" + contractNumber + ", discountRate=" + discountRate
+        return "Lease [id=" + id + ", discountRate=" + discountRate
                 + ", contractStartDate=" + contractStartDate + ", contractEndDate=" + contractEndDate
                 + ", totalPayment=" + totalPayment + ", advancePayment=" + advancePayment + ", initialDirectCost="
                 + initialDirectCost + ", leaseIncentive=" + leaseIncentive + ", numberOfInstallments="
                 + numberOfInstallments + ", authorization=" + authorization + ", installmentDetails="
                 + installmentDetails + ", contractRegisteredDate = " + contractRegisteredDate
-                + ", contractType = " + contractType + " ]";
+                + ", contractType = " + contractType + ", branch_id =  " + branch + "]";
     }
 
 }

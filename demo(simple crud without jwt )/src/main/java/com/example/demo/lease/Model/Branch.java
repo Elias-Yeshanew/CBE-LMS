@@ -5,8 +5,16 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Setter
+@Getter
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "branches")
 public class Branch {
 
@@ -41,6 +49,10 @@ public class Branch {
 
     public Long getId() {
         return branchId;
+    }
+
+    public void setId(long branchId) {
+        this.branchId = branchId;
     }
 
     public String getBranchName() {
