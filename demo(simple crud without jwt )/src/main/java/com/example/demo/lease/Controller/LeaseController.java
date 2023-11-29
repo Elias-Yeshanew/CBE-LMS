@@ -41,25 +41,14 @@ public class LeaseController {
         this.districtService = districtService;
     }
 
-    // @GetMapping("/byBranchId/{branchId}")
-    // public List<Lease> getLeasesByBranchId(@PathVariable Long branchId) {
-    // return leaseRepository.findByBranchId(branchId);
-    // }
     @GetMapping("/byBranchId/{branchId}")
     public List<Lease> getLeasesByBranchId(@PathVariable Long branchId) {
         List<Lease> leases = leaseService.getLeasesByBranchId(branchId);
 
-        // Ensure that the installmentDetails field is correctly formatted as JSON
         for (Lease lease : leases) {
             String installmentDetails = lease.getInstallmentDetails(); // Retrieve the JSON string from the entity
             if (installmentDetails != null) {
-                // Handle JSON parsing to a JSONObject here if necessary
-                // For example, if the installmentDetails is in a specific format
-                // JSONObject installmentDetailsJson = new JSONObject(installmentDetails);
-                // lease.setInstallmentDetails(installmentDetailsJson); // If you need it as a
-                // JSONObject
 
-                // Or, if you don't need to parse it and just return it as a JSON string:
                 lease.setInstallmentDetails(installmentDetails);
             }
         }
@@ -79,22 +68,8 @@ public class LeaseController {
         return allLeases;
     }
 
-    // @GetMapping
-    // public ResponseEntity<List<Map<String, Object>>> getAllLeasesWithBranchIds(
-    // @RequestParam(defaultValue = "0") int page,
-    // @RequestParam(defaultValue = "50") int size) {
-    // List<Map<String, Object>> leasesWithBranchIds =
-    // leaseService.getAllLeasesWithBranchIds(page, size);
-
-    // if (leasesWithBranchIds.isEmpty()) {
-    // return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    // }
-
-    // return new ResponseEntity<>(leasesWithBranchIds, HttpStatus.OK);
-    // }
-
     @GetMapping
-    public ResponseEntity<Map<String, Object>> getAllLeasesWithBranchIds(
+    public ResponseEntity<Map<String, Object>> getAllLeases(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam int size,
             @RequestParam(required = false) Integer startYear,
@@ -127,43 +102,6 @@ public class LeaseController {
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    // public ResponseEntity<Map<String, Object>> getAllLeasesWithBranchIds(
-    // @RequestParam(defaultValue = "1") int page,
-    // @RequestParam(defaultValue = "2") int size) {
-    // List<Map<String, Object>> leasesWithBranchIds =
-    // leaseService.getAllLeasesWithBranchIds(page, size);
-
-    // // Assuming totalResults is the total number of records in the database
-    // long totalResults = leaseService.getTotalLeasesCount();
-
-    // Map<String, Object> response = new HashMap<>();
-    // response.put("code", 200);
-    // response.put("data", Collections.singletonMap("leases",
-    // leasesWithBranchIds));
-    // response.put("pagination", createPaginationResponse(page, size,
-    // totalResults));
-
-    // return ResponseEntity.ok(response);
-    // }
-
-    // private Map<String, Object> createPaginationResponse(int currentPage, int
-    // pageSize, long totalResults) {
-    // int lastPage = (int) Math.ceil((double) totalResults / pageSize);
-    // int nextPage = (currentPage < lastPage) ? currentPage + 1 : lastPage;
-
-    // Map<String, Object> pagination = new HashMap<>();
-    // pagination.put("currentPage", currentPage);
-    // pagination.put("nextPage", nextPage);
-    // pagination.put("lastPage", lastPage);
-    // pagination.put("currentPageLink", String.format("leases?page=%d&size=%d",
-    // currentPage, pageSize));
-    // pagination.put("nextPageLink", String.format("leases?page=%d&size=%d",
-    // nextPage, pageSize));
-    // pagination.put("totalResults", totalResults);
-    // pagination.put("pageSize", pageSize);
-
-    // return pagination;
-    // }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getLeaseWithBranchById(@PathVariable Long id) {
@@ -191,14 +129,87 @@ public class LeaseController {
         return leaseService.getUnauthorizedLeases();
     }
 
+    // @GetMapping("/expiredLeases")
+    // public ResponseEntity<Map<String, Object>>
+    // getExpiredLeasesWithAdditionalFilter(
+    // @RequestParam(defaultValue = "1") int page,
+    // @RequestParam int size,
+    // @RequestParam(required = false) Integer startYear,
+    // @RequestParam(required = false) Integer endYear) {
+    // try {
+    // Map<String, Object> response;
+
+    // if (startYear != null && endYear != null) {
+    // // Filter expired leases with additional filter
+    // response = leaseService.getAllExpiredLeasesWithAdditionalFilter(page, size,
+    // startYear, endYear);
+    // } else if (startYear != null) {
+    // // Filter with only start date
+    // response = leaseService.getLeasesByContractYearRange(startYear,
+    // DEFAULT_END_YEAR, page, size);
+    // } else if (endYear != null) {
+    // // Filter with only end date
+    // response = leaseService.getLeasesByContractYearRange(DEFAULT_START_YEAR,
+    // endYear, page, size);
+    // } else {
+    // // If no additional filter, return all expired leases
+    // response = leaseService.getAllExpiredLeases(page, size);
+    // }
+
+    // return new ResponseEntity<>(response, HttpStatus.OK);
+    // } catch (Exception e) {
+    // // Handle exceptions and return an appropriate response
+    // Map<String, Object> errorResponse = new HashMap<>();
+    // errorResponse.put("timestamp", LocalDateTime.now());
+    // errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+    // errorResponse.put("error", "Internal Server Error");
+    // errorResponse.put("message", e.getMessage());
+    // errorResponse.put("path", "/api/leases/expiredLeasesWithAdditionalFilter");
+    // return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    // }
+    // }
     @GetMapping("/expiredLeases")
-    public List<Map<String, Object>> getExpiredLeases() {
-        return leaseService.getAllExpiredLeases();
+    public Map<String, Object> getExpiredLeases(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam int size) {
+        return leaseService.getAllExpiredLeases(page, size);
     }
+    // public ResponseEntity<Map<String, Object>>
+    // getActiveLeasesWithAdditionalFilter(
+    // @RequestParam(defaultValue = "1") int page,
+    // @RequestParam int size,
+    // @RequestParam(required = false) Integer registeredYear,
+    // @RequestParam(required = false) Integer endYear) {
+    // try {
+    // Map<String, Object> response;
+
+    // if (registeredYear != null && endYear != null) {
+    // // Filter active leases with additional filter
+    // response = leaseService.getAllActiveLeasesWithAdditionalFilter(page, size,
+    // registeredYear, endYear);
+    // } else {
+    // // If no additional filter, return all active leases
+    // response = leaseService.getAllActiveLeases(page, size);
+    // }
+
+    // return new ResponseEntity<>(response, HttpStatus.OK);
+    // } catch (Exception e) {
+    // // Handle exceptions and return an appropriate response
+    // Map<String, Object> errorResponse = new HashMap<>();
+    // errorResponse.put("timestamp", LocalDateTime.now());
+    // errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+    // errorResponse.put("error", "Internal Server Error");
+    // errorResponse.put("message", e.getMessage());
+    // errorResponse.put("path", "/api/leases/activeLeasesWithAdditionalFilter");
+    // return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    // }
+    // }
 
     @GetMapping("/activeContracts")
-    public List<Map<String, Object>> getAllActiveLeases() {
-        return leaseService.getAllActiveLeases();
+    public Map<String, Object> getAllActiveLeases(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam int size) {
+        return leaseService.getAllActiveLeases(page, size);
     }
 
     @PutMapping("/{id}/authorize")

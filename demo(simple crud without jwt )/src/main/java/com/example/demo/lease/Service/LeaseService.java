@@ -103,74 +103,125 @@ public class LeaseService {
         return leaseRepository.findAllByAuthorizationFalse();
     }
 
-    public List<Map<String, Object>> getAllExpiredLeases() {
+    public Map<String, Object> getAllExpiredLeases(int page, int size) {
         LocalDate currentDate = LocalDate.now();
-        List<Lease> leases = leaseRepository.findByContractEndDateBeforeAndAuthorizationIsTrue(currentDate);
+        PageRequest pageable = PageRequest.of(page - 1, size);
+        Page<Lease> leases = leaseRepository.findByContractEndDateBeforeAndAuthorizationIsTrue(currentDate, pageable);
         // LocalDate currentDate = LocalDate.of(2026, 1, 1);
+        Map<String, Object> response = new HashMap<>();
 
-        List<Map<String, Object>> leasesWithBranchIds = new ArrayList<>();
+        response.put("pagination", PaginationUtil.buildPagination(page, size, leases.getTotalElements()));
 
-        for (Lease lease : leases) {
-            Map<String, Object> leaseData = new HashMap<>();
-            leaseData.put("id", lease.getId());
-            leaseData.put("discountRate", lease.getDiscountRate());
-            leaseData.put("contractStartDate", lease.getContractStartDate());
-            leaseData.put("contractEndDate", lease.getContractEndDate());
-            leaseData.put("totalPayment", lease.getTotalPayment());
-            leaseData.put("advancePayment", lease.getAdvancePayment());
-            leaseData.put("initialDirectCost", lease.getInitialDirectCost());
-            leaseData.put("leaseIncentive", lease.getLeaseIncentive());
-            leaseData.put("numberOfInstallments", lease.getNumberOfInstallments());
-            leaseData.put("authorization", lease.isAuthorization());
-            leaseData.put("installmentDetails", lease.getInstallmentDetails());
-            leaseData.put("contractRegisteredDate", lease.getContractRegisteredDate());
-            leaseData.put("contractType", lease.getContractType());
+        response.put("leases",
+                leases.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
 
-            if (lease.getBranch() != null) {
-                leaseData.put("BranchId", lease.getBranch().getId());
-                leaseData.put("branchName", lease.getBranch().getBranchName());
-                // Include other branch fields
-            }
-
-            leasesWithBranchIds.add(leaseData);
-        }
-
-        return leasesWithBranchIds;
-
+        return response;
     }
+    // public Map<String, Object> getAllExpiredLeases(int page, int size) {
+    // LocalDate currentDate = LocalDate.now();
 
-    public List<Map<String, Object>> getAllActiveLeases() {
+    // PageRequest pageable = PageRequest.of(page - 1, size); // Adjust the page
+    // number
+    // Page<Lease> leasePage =
+    // leaseRepository.findByContractEndDateBeforeAndAuthorizationIsTrue(currentDate,
+    // pageable);
+
+    // Map<String, Object> response = new HashMap<>();
+
+    // response.put("pagination", PaginationUtil.buildPagination(page, size,
+    // leasePage.getTotalElements()));
+
+    // response.put("leases",
+    // leasePage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
+
+    // return response;
+
+    // }
+
+    // public Map<String, Object> getAllExpiredLeasesWithAdditionalFilter(int page,
+    // int size, int registeredYear,
+    // int endYear) {
+    // LocalDate currentDate = LocalDate.now();
+    // PageRequest pageable = PageRequest.of(page - 1, size);
+
+    // // Use the custom query with additional filter
+    // Page<Lease> resultPage =
+    // leaseRepository.findExpiredLeasesWithAdditionalFilter(currentDate,
+    // registeredYear,
+    // endYear, pageable);
+
+    // Map<String, Object> response = new HashMap<>();
+
+    // response.put("pagination", PaginationUtil.buildPagination(page, size,
+    // resultPage.getTotalElements()));
+    // response.put("leases",
+    // resultPage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
+
+    // return response;
+    // }
+
+    // public Map<String, Object> getAllActiveLeasesWithAdditionalFilter(int page,
+    // int size, int registeredYear,
+    // int endYear) {
+    // LocalDate currentDate = LocalDate.now();
+    // PageRequest pageable = PageRequest.of(page - 1, size);
+
+    // // Filter active leases
+    // Page<Lease> activeLeasePage =
+    // leaseRepository.findByContractEndDateAfterAndAuthorizationIsTrue(currentDate,
+    // pageable);
+
+    // // Apply additional filter based on contract registered date and end date
+    // List<Lease> filteredLeases = activeLeasePage.getContent().stream()
+    // .filter(lease -> lease.getContractRegisteredDate().getYear() ==
+    // registeredYear
+    // && lease.getContractEndDate().getYear() == endYear)
+    // .collect(Collectors.toList());
+    // Map<String, Object> response = new HashMap<>();
+
+    // response.put("pagination", PaginationUtil.buildPagination(page, size,
+    // activeLeasePage.getTotalElements()));
+    // response.put("leases",
+    // filteredLeases.stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
+
+    // return response;
+    // }
+
+    // public Map<String, Object> getAllActiveLeases(int page, int size) {
+    // LocalDate currentDate = LocalDate.now();
+    // PageRequest pageable = PageRequest.of(page - 1, size); // Adjust the page
+    // number
+    // Page<Lease> leasePage =
+    // leaseRepository.findByContractEndDateAfterAndAuthorizationIsTrue(currentDate,
+    // pageable);
+
+    // Map<String, Object> response = new HashMap<>();
+
+    // response.put("pagination", PaginationUtil.buildPagination(page, size,
+    // leasePage.getTotalElements()));
+
+    // response.put("leases",
+    // leasePage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
+
+    // return response;
+    // }
+
+    public Map<String, Object> getAllActiveLeases(int page, int size) {
+        // LocalDate currentDate = LocalDate.now();
+        // List<Lease> leases =
+        // leaseRepository.findByContractEndDateAfterAndAuthorizationIsTrue(currentDate);
         LocalDate currentDate = LocalDate.now();
-        List<Lease> leases = leaseRepository.findByContractEndDateAfterAndAuthorizationIsTrue(currentDate);
-        List<Map<String, Object>> leasesWithBranchIds = new ArrayList<>();
+        PageRequest pageable = PageRequest.of(page - 1, size);
+        Page<Lease> leases = leaseRepository.findByContractEndDateAfterAndAuthorizationIsTrue(currentDate, pageable);
+        // LocalDate currentDate = LocalDate.of(2026, 1, 1);
+        Map<String, Object> response = new HashMap<>();
 
-        for (Lease lease : leases) {
-            Map<String, Object> leaseData = new HashMap<>();
-            leaseData.put("id", lease.getId());
-            leaseData.put("discountRate", lease.getDiscountRate());
-            leaseData.put("contractStartDate", lease.getContractStartDate());
-            leaseData.put("contractEndDate", lease.getContractEndDate());
-            leaseData.put("totalPayment", lease.getTotalPayment());
-            leaseData.put("advancePayment", lease.getAdvancePayment());
-            leaseData.put("initialDirectCost", lease.getInitialDirectCost());
-            leaseData.put("leaseIncentive", lease.getLeaseIncentive());
-            leaseData.put("numberOfInstallments", lease.getNumberOfInstallments());
-            leaseData.put("authorization", lease.isAuthorization());
-            leaseData.put("installmentDetails", lease.getInstallmentDetails());
-            leaseData.put("contractRegisteredDate", lease.getContractRegisteredDate());
-            leaseData.put("contractType", lease.getContractType());
+        response.put("pagination", PaginationUtil.buildPagination(page, size, leases.getTotalElements()));
 
-            if (lease.getBranch() != null) {
-                leaseData.put("BranchId", lease.getBranch().getId());
-                leaseData.put("branchName", lease.getBranch().getBranchName());
-                // Include other branch fields
-            }
+        response.put("leases",
+                leases.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
 
-            leasesWithBranchIds.add(leaseData);
-        }
-
-        return leasesWithBranchIds;
-
+        return response;
     }
 
     public void authorizeLeaseById(Long leaseId) throws NotFoundException {
@@ -200,23 +251,6 @@ public class LeaseService {
         lease.setAuthorization(true);
         return leaseRepository.save(lease);
     }
-
-    // public Lease addNewLease(Lease lease, MultipartFile file) throws Exception {
-    // if (lease == null) {
-    // throw new IllegalArgumentException("Lease cannot be null");
-    // }
-
-    // lease.setContractRegisteredDate(LocalDate.now());
-
-    // lease.setAuthorization(false);
-
-    // if (file != null) {
-    // String filePath = fileStorageService.storeFile(file);
-    // lease.setFilePath(filePath); // Set the file path in your Lease entity
-    // }
-
-    // return leaseRepository.save(lease);
-    // }
 
     public Lease updateLease(Lease lease) {
         if (leaseRepository.existsById(lease.getId())) {
@@ -386,38 +420,6 @@ public class LeaseService {
         return filePath;
     }
 
-    // public Lease updateLeaseWithFile(Long leaseId, MultipartFile file) throws
-    // IOException, NotFoundException {
-    // Optional<Lease> optionalLease = leaseRepository.findById(leaseId);
-    // if (optionalLease.isPresent()) {
-    // Lease existingLease = optionalLease.get();
-
-    // // Handle file update
-    // if (file != null) {
-    // String filePath = fileStorageService.storeFile(file);
-
-    // // Update file information in the database
-    // FileEntity fileEntity = existingLease.getFileEntity();
-    // if (fileEntity == null) {
-    // fileEntity = new FileEntity();
-    // }
-    // fileEntity.setFileName(file.getOriginalFilename());
-    // fileEntity.setFileType(file.getContentType());
-    // fileEntity.setFilePath(filePath);
-
-    // // Associate the updated fileEntity with the lease
-    // existingLease.setFileEntity(fileEntity);
-    // }
-
-    // // Update other properties if needed
-    // // existingLease.setSomeOtherProperty(...);
-
-    // return leaseRepository.save(existingLease);
-    // } else {
-    // throw new NotFoundException();
-    // }
-    // }
-
     public Long getBranchIdForLease(Long leaseId) {
         Optional<Lease> optionalLease = leaseRepository.findById(leaseId);
 
@@ -432,28 +434,6 @@ public class LeaseService {
         return null; // or throw new NotFoundException("BranchId not found for leaseId: " + leaseId);
     }
 
-    // public Map<Long, Long> getBranchIdsForAllLeases() {
-    // List<Lease> allLeases = leaseRepository.findAll();
-
-    // Map<Long, Long> branchIdsMap = new HashMap<>();
-
-    // for (Lease lease : allLeases) {
-    // if (lease.getBranch() != null) {
-    // branchIdsMap.put(lease.getId(), lease.getBranch().getId());
-    // }
-    // }
-
-    // return branchIdsMap;
-    // }
-
-    // public List<Map<String, Object>> getAllLeasesWithBranchIds(int page, int
-    // size) {
-    // PageRequest pageable = PageRequest.of(page - 1, size);
-    // Page<Lease> leasePage = leaseRepository.findAll(pageable);
-
-    // return
-    // leasePage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList());
-    // }
     public Map<String, Object> getAllLeases(int page, int size) {
         PageRequest pageable = PageRequest.of(page - 1, size); // Adjust the page number
         Page<Lease> leasePage = leaseRepository.findAll(pageable);
@@ -512,42 +492,5 @@ public class LeaseService {
 
         return response;
     }
-
-    // public List<Map<String, Object>> getAllLeasesWithBranchIds(
-    // @RequestParam(defaultValue = "0") int page,
-    // @RequestParam(defaultValue = "50") int size) {
-    // PageRequest pageable = PageRequest.of(page, size);
-    // Page<Lease> leasePage = leaseRepository.findAll(pageable);
-
-    // // List<Lease> leases = leaseRepository.findAll();
-    // List<Map<String, Object>> leasesWithBranchIds = new ArrayList<>();
-
-    // for (Lease lease : leasePage.getContent()) {
-    // Map<String, Object> leaseData = new HashMap<>();
-    // leaseData.put("id", lease.getId());
-    // leaseData.put("discountRate", lease.getDiscountRate());
-    // leaseData.put("contractStartDate", lease.getContractStartDate());
-    // leaseData.put("contractEndDate", lease.getContractEndDate());
-    // leaseData.put("totalPayment", lease.getTotalPayment());
-    // leaseData.put("advancePayment", lease.getAdvancePayment());
-    // leaseData.put("initialDirectCost", lease.getInitialDirectCost());
-    // leaseData.put("leaseIncentive", lease.getLeaseIncentive());
-    // leaseData.put("numberOfInstallments", lease.getNumberOfInstallments());
-    // leaseData.put("authorization", lease.isAuthorization());
-    // leaseData.put("installmentDetails", lease.getInstallmentDetails());
-    // leaseData.put("contractRegisteredDate", lease.getContractRegisteredDate());
-    // leaseData.put("contractType", lease.getContractType());
-
-    // if (lease.getBranch() != null) {
-    // leaseData.put("BranchId", lease.getBranch().getId());
-    // leaseData.put("branchName", lease.getBranch().getBranchName());
-    // // Include other branch fields
-    // }
-
-    // leasesWithBranchIds.add(leaseData);
-    // }
-
-    // return leasesWithBranchIds;
-    // }
 
 }
