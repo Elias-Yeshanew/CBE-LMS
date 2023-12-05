@@ -6,20 +6,26 @@ import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.lease.GenerateReportsRequestBody;
 import com.example.demo.lease.Model.Lease;
 import com.example.demo.lease.Repository.LeaseRepository;
 import com.example.demo.lease.Service.BranchService;
 import com.example.demo.lease.Service.DistrictService;
 import com.example.demo.lease.Service.LeaseService;
-
+import org.springframework.beans.factory.annotation.Value;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.MediaType;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.Files;
 
 @CrossOrigin
 @RestController
@@ -34,6 +40,9 @@ public class LeaseController {
 
     @Autowired
     private LeaseRepository leaseRepository;
+
+    @Value("${file.upload-dir}")
+    private String uploadDir;
 
     public LeaseController(LeaseService leaseService, BranchService branchService, DistrictService districtService) {
         this.leaseService = leaseService;
@@ -129,81 +138,12 @@ public class LeaseController {
         return leaseService.getUnauthorizedLeases();
     }
 
-    // @GetMapping("/expiredLeases")
-    // public ResponseEntity<Map<String, Object>>
-    // getExpiredLeasesWithAdditionalFilter(
-    // @RequestParam(defaultValue = "1") int page,
-    // @RequestParam int size,
-    // @RequestParam(required = false) Integer startYear,
-    // @RequestParam(required = false) Integer endYear) {
-    // try {
-    // Map<String, Object> response;
-
-    // if (startYear != null && endYear != null) {
-    // // Filter expired leases with additional filter
-    // response = leaseService.getAllExpiredLeasesWithAdditionalFilter(page, size,
-    // startYear, endYear);
-    // } else if (startYear != null) {
-    // // Filter with only start date
-    // response = leaseService.getLeasesByContractYearRange(startYear,
-    // DEFAULT_END_YEAR, page, size);
-    // } else if (endYear != null) {
-    // // Filter with only end date
-    // response = leaseService.getLeasesByContractYearRange(DEFAULT_START_YEAR,
-    // endYear, page, size);
-    // } else {
-    // // If no additional filter, return all expired leases
-    // response = leaseService.getAllExpiredLeases(page, size);
-    // }
-
-    // return new ResponseEntity<>(response, HttpStatus.OK);
-    // } catch (Exception e) {
-    // // Handle exceptions and return an appropriate response
-    // Map<String, Object> errorResponse = new HashMap<>();
-    // errorResponse.put("timestamp", LocalDateTime.now());
-    // errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-    // errorResponse.put("error", "Internal Server Error");
-    // errorResponse.put("message", e.getMessage());
-    // errorResponse.put("path", "/api/leases/expiredLeasesWithAdditionalFilter");
-    // return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-    // }
-    // }
     @GetMapping("/expiredLeases")
     public Map<String, Object> getExpiredLeases(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam int size) {
         return leaseService.getAllExpiredLeases(page, size);
     }
-    // public ResponseEntity<Map<String, Object>>
-    // getActiveLeasesWithAdditionalFilter(
-    // @RequestParam(defaultValue = "1") int page,
-    // @RequestParam int size,
-    // @RequestParam(required = false) Integer registeredYear,
-    // @RequestParam(required = false) Integer endYear) {
-    // try {
-    // Map<String, Object> response;
-
-    // if (registeredYear != null && endYear != null) {
-    // // Filter active leases with additional filter
-    // response = leaseService.getAllActiveLeasesWithAdditionalFilter(page, size,
-    // registeredYear, endYear);
-    // } else {
-    // // If no additional filter, return all active leases
-    // response = leaseService.getAllActiveLeases(page, size);
-    // }
-
-    // return new ResponseEntity<>(response, HttpStatus.OK);
-    // } catch (Exception e) {
-    // // Handle exceptions and return an appropriate response
-    // Map<String, Object> errorResponse = new HashMap<>();
-    // errorResponse.put("timestamp", LocalDateTime.now());
-    // errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-    // errorResponse.put("error", "Internal Server Error");
-    // errorResponse.put("message", e.getMessage());
-    // errorResponse.put("path", "/api/leases/activeLeasesWithAdditionalFilter");
-    // return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-    // }
-    // }
 
     @GetMapping("/activeContracts")
     public Map<String, Object> getAllActiveLeases(
@@ -215,16 +155,6 @@ public class LeaseController {
     @PutMapping("/{id}/authorize")
     public void authorizeLease(@PathVariable("id") Long leaseId) throws NotFoundException {
         leaseService.authorizeLeaseById(leaseId);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Lease> updateLease(@PathVariable Long id, @RequestBody Lease lease) {
-        lease.setId(id);
-        Lease updatedLease = leaseService.updateLease(lease);
-        if (updatedLease != null) {
-            return new ResponseEntity<>(updatedLease, HttpStatus.OK);
-        }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @DeleteMapping("/{id}")
@@ -272,6 +202,48 @@ public class LeaseController {
         return leaseService
                 .generateReportsForAll(requestBody.getType(), requestBody.getTerm(), selectedYear, selectedMonth)
                 .toString();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Lease> updateLease(
+            @PathVariable Long id,
+            @RequestBody Lease lease) {
+        lease.setId(id);
+        Lease updatedLease = leaseService.updateLease(id, lease);
+        if (updatedLease != null) {
+            return new ResponseEntity<>(updatedLease, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @PostMapping("/file")
+    public ResponseEntity<?> uploadImage(
+            @RequestPart("file") MultipartFile imageFile) {
+
+        // Assuming you have a storage folder path defined in your properties
+        String storageFolderPath = uploadDir;
+
+        try {
+            // Get the original filename
+            String fileNameVariable = imageFile.getOriginalFilename();
+
+            // Move the file to the storage folder
+            Path destinationPath = Paths.get(storageFolderPath, fileNameVariable);
+            Files.copy(imageFile.getInputStream(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
+
+            // Prepare the response
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "File uploaded");
+            response.put("fileName", fileNameVariable);
+            response.put("storageFolderPath", storageFolderPath);
+
+            return ResponseEntity.ok(response);
+
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception appropriately
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("message", "File upload failed"));
+        }
     }
 
 }

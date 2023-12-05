@@ -1,5 +1,8 @@
 package com.example.demo.lease.Service;
 
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.data.domain.Page;
@@ -25,10 +28,12 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -252,12 +257,47 @@ public class LeaseService {
         return leaseRepository.save(lease);
     }
 
-    public Lease updateLease(Lease lease) {
-        if (leaseRepository.existsById(lease.getId())) {
-            return leaseRepository.save(lease);
+    // public Lease updateLease(Lease lease) {
+    // if (leaseRepository.existsById(lease.getId())) {
+    // return leaseRepository.save(lease);
+    // }
+    // return null;
+    // }
+
+    public Lease updateLease(Long id, Lease updatedLease) {
+        Optional<Lease> existingLeaseOptional = leaseRepository.findById(id);
+
+        if (existingLeaseOptional.isPresent()) {
+            Lease existingLease = existingLeaseOptional.get();
+
+            // Use BeanUtils to selectively copy non-null properties from updatedLease to
+            // existingLease
+            BeanUtils.copyProperties(updatedLease, existingLease, getNullPropertyNames(updatedLease));
+
+            // Save the updated lease
+            return leaseRepository.save(existingLease);
         }
-        return null;
+
+        return null; // or throw NotFoundException
     }
+
+    // Helper method to get null property names from an object
+    private String[] getNullPropertyNames(Object source) {
+        final BeanWrapper src = new BeanWrapperImpl(source);
+        java.beans.PropertyDescriptor[] pds = src.getPropertyDescriptors();
+
+        Set<String> emptyNames = new HashSet<>();
+        for (java.beans.PropertyDescriptor pd : pds) {
+            // Check if value of this property is null, then add it to emptyNames
+            if (src.getPropertyValue(pd.getName()) == null) {
+                emptyNames.add(pd.getName());
+            }
+        }
+
+    String[] result = new String[emptyNames.size()];
+    return emptyNames.toArray(result);
+}
+
 
     public JSONObject deleteLease(Long id) {
         Optional<Lease> leaseOptional = leaseRepository.findById(id);

@@ -70,6 +70,9 @@ public class Lease {
     @Column(name = "contract_type")
     private String contractType;
 
+    @Column(name = "file_path")
+    private String filePath;
+
     @ManyToOne
     @JoinColumn(name = "branch_id")
     @JsonBackReference
@@ -79,7 +82,7 @@ public class Lease {
             LocalDate contractEndDate, BigDecimal totalPayment, BigDecimal advancePayment, BigDecimal initialDirectCost,
             BigDecimal leaseIncentive, int numberOfInstallments, boolean authorization, LocalDate advancePaymentDate,
             String installmentDetails, LocalDate contractRegisteredDate,
-            String contractType, Branch branch) {
+            String contractType, Branch branch, String filePath) {
         this.id = id;
         this.totalPayment = totalPayment;
         this.advancePayment = advancePayment;
@@ -93,6 +96,7 @@ public class Lease {
         this.installmentDetails = installmentDetails;
         this.contractRegisteredDate = contractRegisteredDate;
         this.contractType = contractType;
+        this.filePath = filePath;
 
     }
 
@@ -206,6 +210,14 @@ public class Lease {
 
     public void setContractType(String contractType) {
         this.contractType = contractType;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
     }
 
     public Branch getBranch() {
