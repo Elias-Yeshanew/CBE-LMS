@@ -27,6 +27,12 @@ public class District {
     @Column(name = "district_name")
     private String districtName;
 
+    @Column(name = "leaseLiablity_account")
+    private String leaseLiabilityAccount;
+
+    @Column(name = "rou_account")
+    private String rouAccount;
+
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "region_id", referencedColumnName = "region_id")
     private Region region;
@@ -47,4 +53,19 @@ public class District {
         this.districtName = districtName;
     }
 
+    public String getLeaseLiabilityAccount() {
+        return leaseLiabilityAccount;
+    }
+
+    public void setLeaseLiabilityAccount(String leaseLiabilityAccount) {
+        this.leaseLiabilityAccount = leaseLiabilityAccount;
+    }
+
+    public String getRouAccount() {
+        return rouAccount;
+    }
+
+    public void setRouAccount(String rouAccount) {
+        this.rouAccount = rouAccount;
+    }
 }

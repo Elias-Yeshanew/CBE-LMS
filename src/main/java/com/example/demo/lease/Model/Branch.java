@@ -37,6 +37,9 @@ public class Branch {
     @Column(name = "cost_center")
     private String costCenter;
 
+    @Column(name = "Claim_Account")
+    private String claimAccount;
+
     @ManyToOne
     @JoinColumn(name = "district_id", referencedColumnName = "district_id")
     private District district;
@@ -89,4 +92,13 @@ public class Branch {
     public void setLocation(String location) {
         this.location = location;
     }
+
+    public String getClaimAccount() {
+        return claimAccount;
+    }
+
+    public void setClaimAccount(String claimAccount) {
+        this.claimAccount = claimAccount;
+    }
+
 }

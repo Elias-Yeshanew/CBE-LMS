@@ -239,6 +239,7 @@ public class LeaseService {
         long id = report.getId();
         LocalDate startDate = report.getContractStartDate();
         LocalDate endDate = report.getContractEndDate();
+        LocalDate contractStarDate = report.getContractStartDate();
         BigDecimal advancePaymentB = report.getAdvancePayment();
         Double advancePayment = advancePaymentB.doubleValue();
         Double discountRate = report.getDiscountRate();
@@ -277,7 +278,7 @@ public class LeaseService {
         } else if (type.equals("single") && term.equals("yearly")) {
             reportResult = CalculateReport.calculateReportY(id, startDate, endDate, rightOfUse, depreciationPerMonth,
                     term, totalPayment, advancePayment, discountRate, leaseLiablity, contractRegisteredDate,
-                    installmentDetails, branchId, contractType);
+                    installmentDetails, branchId, contractType, contractStarDate);
         }
 
         return new JSONObject(reportResult);
@@ -410,6 +411,21 @@ public class LeaseService {
         }
 
         return leaseData;
+    }
+
+    public Map<String, Object> getLeasesByContractYear(int startYear, int endYear, int page, int size) {
+        PageRequest pageable = PageRequest.of(page - 1, size); // Adjust the page number
+        Page<Lease> leasePage = leaseRepository.findByContractStartDateYearORContractEndDateYear(startYear, endYear,
+                pageable);
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("pagination", PaginationUtil.buildPagination(page, size, leasePage.getTotalElements()));
+
+        response.put("leases",
+                leasePage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
+
+        return response;
     }
 
     public Map<String, Object> getLeasesByContractYearRange(int startYear, int endYear, int page, int size) {

@@ -32,6 +32,7 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
 
         List<Lease> findByBranch(Branch branch);
 
+
         List<Lease> findAllByAuthorizationTrue();
 
         Page<Lease> findByContractEndDateBeforeAndAuthorizationIsTrue(LocalDate date, PageRequest pageable);
@@ -42,9 +43,23 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
         Page<Lease> findByContractEndDateAfterAndAuthorizationIsTrue(LocalDate date, PageRequest pageable);
 
         @Query("SELECT l FROM Lease l " +
-                        "WHERE YEAR(l.contractRegisteredDate) = :startYear " +
-                        "OR (:endYear IS NULL OR YEAR(l.contractEndDate) = :endYear)")
-        Page<Lease> findByContractStartDateYearAndContractEndDateYear(int startYear, int endYear, PageRequest pageable);
+                        "WHERE (:startYear IS null OR YEAR(l.contractRegisteredDate) = :startYear) " +
+                        "OR (:endYear IS null OR YEAR(l.contractEndDate) = :endYear )")
+        Page<Lease> findByContractStartDateYearORContractEndDateYear(int startYear,
+                        int endYear, PageRequest pageable);
+
+        @Query("SELECT l FROM Lease l " +
+                        "WHERE (:startYear IS null OR YEAR(l.contractRegisteredDate) = :startYear) " +
+                        "And (:endYear IS null OR YEAR(l.contractEndDate) = :endYear )")
+        Page<Lease> findByContractStartDateYearAndContractEndDateYear(int startYear,
+                        int endYear, PageRequest pageable);
+
+        // @Query("SELECT l FROM Lease l " +
+        // "WHERE (:startYear IS NULL OR YEAR(l.contractStartDate) = :startYear) " +
+        // "AND (:endYear IS NULL OR YEAR(l.contractEndDate) = :endYear OR :endYear IS
+        // NULL)")
+        // Page<Lease> findByContractStartDateYearAndContractEndDateYear(int startYear,
+        // int endYear, PageRequest pageable);
 
         // Page<Lease>
         // findByContractRegisteredDateBeforeAndContractEndDateBeforeAndAuthorizationIsTrue(
@@ -65,5 +80,6 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
                         @Param("registeredYear") int registeredYear,
                         @Param("endYear") int endYear,
                         PageRequest pageable);
+
 
 }

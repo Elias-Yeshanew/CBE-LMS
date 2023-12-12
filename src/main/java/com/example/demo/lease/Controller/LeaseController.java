@@ -50,20 +50,21 @@ public class LeaseController {
         this.districtService = districtService;
     }
 
-    @GetMapping("/byBranchId/{branchId}")
-    public List<Lease> getLeasesByBranchId(@PathVariable Long branchId) {
-        List<Lease> leases = leaseService.getLeasesByBranchId(branchId);
+    // @GetMapping("/byBranchId/{branchId}")
+    // public List<Lease> getLeasesByBranchId(@PathVariable Long branchId) {
+    // List<Lease> leases = leaseService.getLeasesByBranchId(branchId);
 
-        for (Lease lease : leases) {
-            String installmentDetails = lease.getInstallmentDetails(); // Retrieve the JSON string from the entity
-            if (installmentDetails != null) {
+    // for (Lease lease : leases) {
+    // String installmentDetails = lease.getInstallmentDetails(); // Retrieve the
+    // JSON string from the entity
+    // if (installmentDetails != null) {
 
-                lease.setInstallmentDetails(installmentDetails);
-            }
-        }
+    // lease.setInstallmentDetails(installmentDetails);
+    // }
+    // }
 
-        return leases;
-    }
+    // return leases;
+    // }
 
     @GetMapping("/byBranchId")
     public List<Lease> getLeasesByBranchIds(@RequestBody List<Long> branchIds) {
@@ -89,12 +90,12 @@ public class LeaseController {
             if (startYear != null && endYear != null) {
                 // Filter between two dates
                 response = leaseService.getLeasesByContractYearRange(startYear, endYear, page, size);
-            } else if (startYear != null) {
+            } else if (startYear != null && endYear == null) {
                 // Filter with only start date
-                response = leaseService.getLeasesByContractYearRange(startYear, DEFAULT_END_YEAR, page, size);
-            } else if (endYear != null) {
+                response = leaseService.getLeasesByContractYear(startYear, DEFAULT_END_YEAR, page, size);
+            } else if (startYear == null && endYear != null) {
                 // Filter with only end date
-                response = leaseService.getLeasesByContractYearRange(DEFAULT_START_YEAR, endYear, page, size);
+                response = leaseService.getLeasesByContractYear(DEFAULT_START_YEAR, endYear, page, size);
             } else {
                 // No date filter, get all leases
                 response = leaseService.getAllLeases(page, size);
@@ -243,6 +244,17 @@ public class LeaseController {
             e.printStackTrace(); // Handle the exception appropriately
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("message", "File upload failed"));
+        }
+    }
+
+    @GetMapping("/byBranchId/{branchId}")
+    public ResponseEntity<List<Lease>> getLeasesByBranchId(@PathVariable Long branchId) {
+        List<Lease> leases = leaseRepository.findByBranchId(branchId);
+
+        if (leases.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        } else {
+            return ResponseEntity.ok(leases);
         }
     }
 

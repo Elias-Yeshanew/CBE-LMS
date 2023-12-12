@@ -140,7 +140,9 @@ public class CalculateReport {
         JSONArray ammortizationArray = new JSONArray();
         JSONArray detailArray = new JSONArray();
 
+
         JSONObject detail = new JSONObject();
+        detail.put("contractMonth", Math.round(monthBetween(startDate, endDate)));
         detail.put("id", Id);
         detail.put("BranchId", BranchId);
         detail.put("totalPayment", totalPayment);
@@ -372,7 +374,7 @@ public class CalculateReport {
 
         }
 
-       
+
         for (int i = 0; i < amountOfDepreciation; i++) {
             if (i == 0) {
                 JSONObject finalYear = new JSONObject();
@@ -421,7 +423,7 @@ public class CalculateReport {
     public static String calculateReportY(long Id, LocalDate startDate, LocalDate endDate, double rightOfUse,
             double depreciationPerMonth, String type, double totalPayment, double advancePayment,
             double discountRate, double leaseLiability, LocalDate contractRegisteredDate, String installmentDetails,
-            long BranchId, String contractType) {
+            long BranchId, String contractType, LocalDate contractStartDates) {
 
         double firstRemainingMonth = 0;
         double firstsMonth = 0;
@@ -457,10 +459,12 @@ public class CalculateReport {
             amountOfDepreciation = 1;
         }
 
-        amountOfDepreciation += (int) Math.round(monthBetween(contractRegisteredDate, endDate) / 12);
-        // System.out.println("---------------------------------------------------year
-        // amount of depreciation--------- "
-        // + amountOfDepreciation);
+        amountOfDepreciation += yearsBetween(contractRegisteredDate, endDate) + 1;
+        System.out.println(
+                "yearsBetween(contractRegisteredDate, endDate) " + yearsBetween(contractRegisteredDate, endDate));
+        System.out.println(
+                "---------------------------------------------------year amount of depreciation--------- "
+                        + amountOfDepreciation);
         JSONArray reportArray = new JSONArray();
         JSONArray ammortizationArray = new JSONArray();
         JSONArray detailArray = new JSONArray();
@@ -468,13 +472,14 @@ public class CalculateReport {
         JSONObject detail = new JSONObject();
         detail.put("id", Id);
         detail.put("BranchId", BranchId);
-
         detail.put("totalPayment", totalPayment);
         detail.put("advancePayment", advancePayment);
         detail.put("rightOfUse", rightOfUse);
         detail.put("depreciationPerMonth", formatToTwoDecimalPlaces(depreciationPerMonth));
         detail.put("leaseLiability", leaseLiability);
         detail.put("contractType", contractType);
+        detail.put("contractYear", yearsBetween(startDate, endDate));
+
         detailArray.put(detail);
         // reportArray.put(initialBalance);
         double depreciationF = 0;
@@ -554,9 +559,9 @@ public class CalculateReport {
                         JSONObject finalYear = new JSONObject();
                         finalYear.put("year", "-");
                         finalYear.put("interestExpence", "-");
+                        finalYear.put("leasePayment", leasePayment);
                         finalYear.put("balance", formatToTwoDecimalPlaces(balance));
                         ammortizationArray.put(finalYear);
-                        System.out.println("balance " + balance);
                         endDate = getNextTerm(contractRegisteredDate, "yearly");
                     } else if (i == yearsBetween && count == numberofinstallment) {
                         startDate = endDate;
@@ -568,7 +573,8 @@ public class CalculateReport {
 
                         JSONObject reportEntry = new JSONObject();
                         reportEntry.put("year", getNextTerm(startDate, "yearly"));
-                        reportEntry.put("balance", balance);
+                        reportEntry.put("leasePayment", leasePayment);
+                        reportEntry.put("balance", "-");
                         reportEntry.put("interestExpence", formatToTwoDecimalPlaces(interestExpense));
                         ammortizationArray.put(reportEntry);
                         break;
@@ -590,6 +596,7 @@ public class CalculateReport {
 
                         JSONObject reportEntry = new JSONObject();
                         reportEntry.put("year", getNextTerm(startDate, "yearly"));
+                        reportEntry.put("leasePayment", leasePayment);
                         reportEntry.put("balance", balance);
                         reportEntry.put("interestExpence", formatToTwoDecimalPlaces(interestExpense));
                         ammortizationArray.put(reportEntry);
@@ -620,6 +627,7 @@ public class CalculateReport {
                         JSONObject reportEntry = new JSONObject();
                         reportEntry.put("year", getNextTerm(startDate, "yearly"));
                         reportEntry.put("balance", formatToTwoDecimalPlaces(balance));
+                        reportEntry.put("leasePayment", leasePayment);
                         reportEntry.put("interestExpence", formatToTwoDecimalPlaces(interestExpense));
                         ammortizationArray.put(reportEntry);
                         leaseLiability = updateLeaseLiability(leaseLiability, interestExpense,
@@ -637,6 +645,7 @@ public class CalculateReport {
                         JSONObject reportEntry = new JSONObject();
                         reportEntry.put("year", getNextTerm(startDate, "yearly"));
                         reportEntry.put("balance", formatToTwoDecimalPlaces(balance));
+                        reportEntry.put("leasePayment", leasePayment);
                         reportEntry.put("interestExpence", formatToTwoDecimalPlaces(interestExpense));
                         ammortizationArray.put(reportEntry);
                         leaseLiability = updateLeaseLiability(leaseLiability, interestExpense,
@@ -659,7 +668,7 @@ public class CalculateReport {
             if (i == 0) {
                 balance = rightOfUse;
                 JSONObject finalYear = new JSONObject();
-                finalYear.put("year", startDate.toString());
+                finalYear.put("year", contractStartDates.toString());
                 finalYear.put("balance", formatToTwoDecimalPlaces(balance));
                 finalYear.put("deprecationExp", 0);
                 finalYear.put("months", "-");
@@ -706,6 +715,13 @@ public class CalculateReport {
         reportObject.put("report", reportArray);
         reportObject.put("ammortization", ammortizationArray);
         return reportObject.toString();
+    }
+
+    private static Double yearsBetween(LocalDate startDate, LocalDate endDate) {
+        Period period = Period.between(startDate, endDate);
+        int yearbetween = period.getYears() + 1;
+        return (double) yearbetween;
+
     }
 
     static double monthBetween(LocalDate startDate, LocalDate endDate) {
@@ -839,7 +855,7 @@ public class CalculateReport {
     }
 
     public double calculateRightOfUseAsset(double advancePayments, double leaseLiability,
-            double initialDirectCosts, double leaseIncentives) {
+            double leaseIncentives, double initialDirectCosts) {
         double rightOfUseAsset = (advancePayments + leaseLiability + initialDirectCosts) - leaseIncentives;
         return Math.round(rightOfUseAsset * 100.0) / 100.0;
     }
