@@ -30,6 +30,9 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
 
         List<Lease> getLeasesByBranchId(Long branchId);
 
+        @Query("SELECT l FROM Lease l WHERE l.branch.district.id = :districtId")
+        List<Lease> findByDistrictIdQuery(@Param("districtId") Long districtId);
+
         List<Lease> findByBranch(Branch branch);
 
 

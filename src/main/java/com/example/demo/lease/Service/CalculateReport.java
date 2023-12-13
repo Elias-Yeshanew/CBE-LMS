@@ -459,9 +459,13 @@ public class CalculateReport {
             amountOfDepreciation = 1;
         }
 
+
         amountOfDepreciation += yearsBetween(contractRegisteredDate, endDate) + 1;
         System.out.println(
                 "yearsBetween(contractRegisteredDate, endDate) " + yearsBetween(contractRegisteredDate, endDate));
+
+        System.out.println(
+                "-----------------------------contractRegisteredDate---------------------" + contractRegisteredDate);
         System.out.println(
                 "---------------------------------------------------year amount of depreciation--------- "
                         + amountOfDepreciation);

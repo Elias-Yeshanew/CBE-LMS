@@ -50,33 +50,6 @@ public class LeaseController {
         this.districtService = districtService;
     }
 
-    // @GetMapping("/byBranchId/{branchId}")
-    // public List<Lease> getLeasesByBranchId(@PathVariable Long branchId) {
-    // List<Lease> leases = leaseService.getLeasesByBranchId(branchId);
-
-    // for (Lease lease : leases) {
-    // String installmentDetails = lease.getInstallmentDetails(); // Retrieve the
-    // JSON string from the entity
-    // if (installmentDetails != null) {
-
-    // lease.setInstallmentDetails(installmentDetails);
-    // }
-    // }
-
-    // return leases;
-    // }
-
-    @GetMapping("/byBranchId")
-    public List<Lease> getLeasesByBranchIds(@RequestBody List<Long> branchIds) {
-        List<Lease> allLeases = new ArrayList<>();
-
-        for (Long branchId : branchIds) {
-            List<Lease> leasesForBranch = leaseRepository.findByBranchId(branchId);
-            allLeases.addAll(leasesForBranch);
-        }
-
-        return allLeases;
-    }
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllLeases(
@@ -248,13 +221,43 @@ public class LeaseController {
     }
 
     @GetMapping("/byBranchId/{branchId}")
-    public ResponseEntity<List<Lease>> getLeasesByBranchId(@PathVariable Long branchId) {
+    public ResponseEntity<Object> getLeasesByBranchId(@PathVariable Long branchId) {
         List<Lease> leases = leaseRepository.findByBranchId(branchId);
 
         if (leases.isEmpty()) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "No leases found for branch ID: " + branchId);
             return ResponseEntity.notFound().build();
         } else {
-            return ResponseEntity.ok(leases);
+            Map<String, Object> response = new HashMap<>();
+            response.put("leases", leases);
+            return ResponseEntity.ok(response);
+        }
+    }
+
+    // @GetMapping("/byDistrictId/{districtId}")
+    // public ResponseEntity<List<Lease>> getLeasesByDistrictId(@PathVariable Long
+    // districtId) {
+    // List<Lease> leases = leaseRepository.findByDistrictIdQuery(districtId);
+
+    // if (leases.isEmpty()) {
+    // return ResponseEntity.notFound().build();
+    // } else {
+    // return ResponseEntity.ok(leases);
+    // }
+    // }
+    @GetMapping("/byDistrictId/{districtId}")
+    public ResponseEntity<Object> getLeasesByDistrictId(@PathVariable Long districtId) {
+        List<Lease> leases = leaseRepository.findByDistrictIdQuery(districtId);
+
+        if (leases.isEmpty()) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "No leases found for district ID: " + districtId);
+            return ResponseEntity.notFound().build();
+        } else {
+            Map<String, Object> response = new HashMap<>();
+            response.put("leases", leases);
+            return ResponseEntity.ok(response);
         }
     }
 
