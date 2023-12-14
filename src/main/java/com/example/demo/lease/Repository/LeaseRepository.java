@@ -57,22 +57,18 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
         Page<Lease> findByContractStartDateYearAndContractEndDateYear(int startYear,
                         int endYear, PageRequest pageable);
 
-        // @Query("SELECT l FROM Lease l " +
-        // "WHERE (:startYear IS NULL OR YEAR(l.contractStartDate) = :startYear) " +
-        // "AND (:endYear IS NULL OR YEAR(l.contractEndDate) = :endYear OR :endYear IS
-        // NULL)")
-        // Page<Lease> findByContractStartDateYearAndContractEndDateYear(int startYear,
-        // int endYear, PageRequest pageable);
+        @Query("SELECT l, b.branchName as branchName FROM Lease l JOIN l.branch b WHERE b.id = :branchId")
+        List<Lease> findByBranchIdWithBranchName(@Param("branchId") Long branchId);
 
-        // Page<Lease>
-        // findByContractRegisteredDateBeforeAndContractEndDateBeforeAndAuthorizationIsTrue(
-        // LocalDate registeredYear, LocalDate endYear, PageRequest pageable);
+        List<Lease> findByBranchIdAndContractRegisteredDateContaining(Long branchId, Integer contractRegisteredDate);
+        // List<Lease> findByBranchIdAndContractRegisteredDateYear(Long branchId, int
+        // contractRegistrationYear);
 
-        // @Query("SELECT l FROM Lease l WHERE l.contractRegisteredDate < :endDate AND
-        // l.contractEndDate < :endDate AND l.authorization = true")
-        // Page<Lease>
-        // findByContractRegisteredDateBeforeAndContractEndDateBeforeAndAuthorizationIsTrueAndExpiredLeaseIsTrue(
-        // @Param("endDate") LocalDate endDate, PageRequest pageable);
+        // @Query("SELECT l FROM Lease l WHERE l.branchId = :branchId AND
+        // FUNCTION('YEAR', l.contractRegisteredDate) = :year")
+        // List<Lease> findByBranchIdAndContractRegisteredDateYear(@Param("branchId")
+        // Long branchId,
+        // @Param("year") int year);
 
         @Query("SELECT l FROM Lease l " +
                         "WHERE YEAR(l.contractRegisteredDate) = :registeredYear " +

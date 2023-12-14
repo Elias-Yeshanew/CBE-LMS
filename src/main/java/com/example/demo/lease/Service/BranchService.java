@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.lease.Model.Branch;
 import com.example.demo.lease.Model.District;
-import com.example.demo.lease.Model.Region;
 import com.example.demo.lease.Repository.BranchRepository;
 import com.example.demo.lease.Repository.DistrictRepository;
 

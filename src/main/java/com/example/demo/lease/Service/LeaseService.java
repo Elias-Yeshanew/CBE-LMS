@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 public class LeaseService {
 
     private final LeaseRepository leaseRepository;
+    private final CalculateReport calculateReport;
     // private final BranchRepository branchRepository;
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -46,8 +47,9 @@ public class LeaseService {
     // @Autowired
     // private FileStorageService fileStorageService;
 
-    public LeaseService(LeaseRepository leaseRepository) {
+    public LeaseService(LeaseRepository leaseRepository, CalculateReport calculateReport) {
         this.leaseRepository = leaseRepository;
+        this.calculateReport = calculateReport;
         // this.branchRepository = branchRepository;
 
     }
@@ -256,7 +258,7 @@ public class LeaseService {
         Double leaseLiablity = calculate.calculateLeaseLiability(totalPayment, advancePayment, discountRate, startDate,
                 endDate, installmentDetails, contractRegisteredDate);
         Double rightOfUse = calculate.calculateRightOfUseAsset(advancePayment, leaseLiablity, leaseIncentive,
-                initialDirectCost);
+                initialDirectCost, installmentDetails, contractRegisteredDate);
         Double depreciationPerMonth = calculate.calculateDepreciationPerMonth(rightOfUse,
                 monthBetweenn(startDate, endDate));
         Long branchId = getBranchIdForLease(id);
@@ -274,11 +276,11 @@ public class LeaseService {
         } else if (type.equals("single") && term.equals("monthly")) {
             reportResult = CalculateReport.calculateReportM(id, startDate, endDate, rightOfUse, depreciationPerMonth,
                     term, totalPayment, advancePayment, discountRate, leaseLiablity, contractRegisteredDate,
-                    installmentDetails, branchId, contractType);
+                    installmentDetails, branchId, contractType, endDate);
         } else if (type.equals("single") && term.equals("yearly")) {
             reportResult = CalculateReport.calculateReportY(id, startDate, endDate, rightOfUse, depreciationPerMonth,
                     term, totalPayment, advancePayment, discountRate, leaseLiablity, contractRegisteredDate,
-                    installmentDetails, branchId, contractType, contractStarDate);
+                    installmentDetails, branchId, contractType, contractStarDate, endDate);
         }
 
         return new JSONObject(reportResult);
@@ -386,6 +388,15 @@ public class LeaseService {
     }
 
     private Map<String, Object> mapLeaseWithBranchId(Lease lease) {
+
+        Double leaseLiability = calculateLeaseLiabilityWrapper(lease.getTotalPayment().doubleValue(),
+                lease.getAdvancePayment().doubleValue(), lease.getDiscountRate(),
+                lease.getContractStartDate(),
+                lease.getContractEndDate(), lease.getInstallmentDetails(),
+                lease.getContractRegisteredDate());
+
+        lease.setLeaseLiability(leaseLiability);
+
         Map<String, Object> leaseData = new HashMap<>();
         leaseData.put("id", lease.getId());
         leaseData.put("discountRate", lease.getDiscountRate());
@@ -401,6 +412,7 @@ public class LeaseService {
         leaseData.put("contractType", lease.getContractType());
         leaseData.put("contract Reason", lease.getContractReason());
         leaseData.put("fileName", lease.getFileName());
+        leaseData.put("leaseLiability", lease.getLeaseLiability());
 
         // Include other lease fields
 
@@ -411,6 +423,14 @@ public class LeaseService {
         }
 
         return leaseData;
+    }
+
+    public double calculateLeaseLiabilityWrapper(Double totalContractPrice, double advancePayment, double discountRate,
+            LocalDate contractStartDate, LocalDate contractEndDate, String installmentDetails,
+            LocalDate contractRegisteredDate) {
+        // You can now call the method from CalculateReport
+        return calculateReport.calculateLeaseLiability(totalContractPrice, advancePayment, discountRate,
+                contractStartDate, contractEndDate, installmentDetails, contractRegisteredDate);
     }
 
     public Map<String, Object> getLeasesByContractYear(int startYear, int endYear, int page, int size) {
@@ -441,6 +461,10 @@ public class LeaseService {
                 leasePage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
 
         return response;
+    }
+
+    public List<Lease> getLeasesByBranchIdAndContractRegisteredYear(Long branchId, Integer startYear) {
+        return leaseRepository.findByBranchIdAndContractRegisteredDateContaining(branchId, startYear);
     }
 
 }

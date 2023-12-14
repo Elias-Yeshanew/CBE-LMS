@@ -3,6 +3,7 @@ package com.example.demo.lease.Controller;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import com.example.demo.lease.Service.DistrictService;
 import com.example.demo.lease.Service.LeaseService;
 import org.springframework.beans.factory.annotation.Value;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,7 +51,6 @@ public class LeaseController {
         this.branchService = branchService;
         this.districtService = districtService;
     }
-
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllLeases(
@@ -220,32 +221,97 @@ public class LeaseController {
         }
     }
 
-    @GetMapping("/byBranchId/{branchId}")
-    public ResponseEntity<Object> getLeasesByBranchId(@PathVariable Long branchId) {
-        List<Lease> leases = leaseRepository.findByBranchId(branchId);
-
-        if (leases.isEmpty()) {
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "No leases found for branch ID: " + branchId);
-            return ResponseEntity.notFound().build();
-        } else {
-            Map<String, Object> response = new HashMap<>();
-            response.put("leases", leases);
-            return ResponseEntity.ok(response);
+    private List<Map<String, Object>> mapLeasesToResponse(List<Lease> leases) {
+        List<Map<String, Object>> leasesWithBranchName = new ArrayList<>();
+        for (Lease lease : leases) {
+            Map<String, Object> leaseData = new HashMap<>();
+            leaseData.put("districtName", lease.getBranch().getDistrict().getDistrictName());
+            leaseData.put("branchName", lease.getBranch().getBranchName());
+            leaseData.put("id", lease.getId());
+            leaseData.put("discountRate", lease.getDiscountRate());
+            leaseData.put("branchName", lease.getBranch().getBranchName());
+            leaseData.put("contractStartDate", lease.getContractStartDate());
+            leaseData.put("contractEndDate", lease.getContractEndDate());
+            leaseData.put("totalPayment", lease.getTotalPayment());
+            leaseData.put("advancePayment", lease.getAdvancePayment());
+            leaseData.put("initialDirectCost", lease.getInitialDirectCost());
+            leaseData.put("leaseIncentive", lease.getLeaseIncentive());
+            leaseData.put("authorization", lease.isAuthorization());
+            leaseData.put("installmentDetails", lease.getInstallmentDetails());
+            leaseData.put("contractRegisteredDate", lease.getContractRegisteredDate());
+            leaseData.put("contractType", lease.getContractType());
+            leaseData.put("fileName", lease.getFileName());
+            leaseData.put("contractReason", lease.getContractReason());
+            leasesWithBranchName.add(leaseData);
         }
+        return leasesWithBranchName;
     }
 
-    // @GetMapping("/byDistrictId/{districtId}")
-    // public ResponseEntity<List<Lease>> getLeasesByDistrictId(@PathVariable Long
-    // districtId) {
-    // List<Lease> leases = leaseRepository.findByDistrictIdQuery(districtId);
+    @GetMapping("/byBranchId/{branchId}")
+    public ResponseEntity<Object> getLeasesByBranchId(@PathVariable Long branchId,
+            @RequestParam(required = false, defaultValue = "0") int startYear) {
+        List<Lease> leases;
+        if (startYear != 0) {
+            // Filter leases based on the provided contract registration year
+            leases = leaseRepository.findByBranchIdAndContractRegisteredDateContaining(branchId,
+                    startYear);
+        } else {
+            leases = leaseRepository.findByBranchId(branchId);
+        }
+    if (leases.isEmpty()) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "No leases found for branch ID: " + branchId);
+        return ResponseEntity.notFound().build();
+    } else {
+        Map<String, Object> response = new HashMap<>();
+    response.put("leases", mapLeasesToResponse(leases));
+    return ResponseEntity.ok(response);
+}
+}
+
+@GetMapping("/by-branch/{branchId}")
+public ResponseEntity<List<Lease>> getLeasesByBranchId(
+        @PathVariable Long branchId,
+        @RequestParam(required = false) Integer startDate) {
+
+    List<Lease> leases;
+
+    if (startDate != null) {
+        // Use the converted value in your service method
+        leases = leaseService.getLeasesByBranchIdAndContractRegisteredYear(branchId, startDate);
+    } else {
+        leases = leaseService.getLeasesByBranchId(branchId);
+    }
+
+    return new ResponseEntity<>(leases, HttpStatus.OK);
+    }
+
+    // @GetMapping("/byBranchId/{branchId}")
+    // public ResponseEntity<Object> getLeasesByBranchId(@PathVariable Long
+    // branchId,
+    // @RequestParam(required = false, defaultValue = "0") int startYear) {
+    // List<Lease> leases;
+
+    // if (startYear != 0) {
+    // // Filter leases based on the provided contract registration year
+    // leases =
+    // leaseRepository.findByBranchIdAndContractRegisteredDateYear(branchId,
+    // startYear);
+    // } else {
+    // leases = leaseRepository.findByBranchId(branchId);
+    // }
 
     // if (leases.isEmpty()) {
+    // Map<String, String> response = new HashMap<>();
+    // response.put("message", "No leases found for branch ID: " + branchId);
     // return ResponseEntity.notFound().build();
     // } else {
-    // return ResponseEntity.ok(leases);
+    // Map<String, Object> response = new HashMap<>();
+    // response.put("leases", mapLeasesToResponse(leases));
+    // return ResponseEntity.ok(response);
     // }
     // }
+
     @GetMapping("/byDistrictId/{districtId}")
     public ResponseEntity<Object> getLeasesByDistrictId(@PathVariable Long districtId) {
         List<Lease> leases = leaseRepository.findByDistrictIdQuery(districtId);
@@ -256,7 +322,7 @@ public class LeaseController {
             return ResponseEntity.notFound().build();
         } else {
             Map<String, Object> response = new HashMap<>();
-            response.put("leases", leases);
+            response.put("leases", mapLeasesToResponse(leases));
             return ResponseEntity.ok(response);
         }
     }

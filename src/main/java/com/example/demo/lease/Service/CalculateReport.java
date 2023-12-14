@@ -119,12 +119,49 @@ public class CalculateReport {
     public static String calculateReportM(long Id, LocalDate startDate, LocalDate endDate, double rightOfUse,
             double depreciationPerMonth, String type, double totalPayment, double advancePayment,
             double discountRate, double leaseLiability, LocalDate contractRegisteredDate, String installmentDetails,
-            long BranchId, String contractType) {
-        double constDepreciationPerM;
-        if (totalPayment == advancePayment) {
-            constDepreciationPerM = totalPayment / calculateContractMonths(startDate, endDate);
-        } else {
-            constDepreciationPerM = depreciationPerMonth;
+            long BranchId, String contractType, LocalDate contractEndDates) {
+        double constDepreciationPerM = 0;
+        int monthBetweens = (int) monthBetweens(contractRegisteredDate, contractEndDates);
+        double advancePayments = advancePayment;
+
+        if (installmentDetails != null) {
+
+            JSONObject jsonObject = new JSONObject(installmentDetails);
+
+            Map<LocalDate, BigDecimal> installmentMap = new TreeMap<>();
+
+            for (String key : jsonObject.keySet()) {
+                BigDecimal value = jsonObject.getBigDecimal(key);
+                LocalDate date = LocalDate.parse(key); // Parse the date string into a LocalDate
+                installmentMap.put(date, value);
+            }
+
+            for (Map.Entry<LocalDate, BigDecimal> entry : installmentMap.entrySet()) {
+                LocalDate installmentDate = entry.getKey();
+                BigDecimal installmentAmount = entry.getValue();
+                double futureLeasePayments = installmentAmount.doubleValue();
+                System.out.println("advancePayment:----------------- " + advancePayments);
+                if (installmentDate.isBefore(contractRegisteredDate) || getNextTerm(contractRegisteredDate, "yearly")
+                        .isEqual(getNextTerm(installmentDate, "yearly"))) {
+                    monthBetweens += 2;
+
+                    advancePayments += futureLeasePayments;
+                    System.out.println("advancePayments: " + advancePayments);
+
+                } else {
+                    monthBetweens += 3;
+                }
+
+            }
+
+            System.out.println("advancePayments: " + advancePayments);
+            System.out.println("totalPayment: " + totalPayment);
+            if (totalPayment == advancePayment) {
+                constDepreciationPerM = totalPayment / calculateContractMonths(startDate, endDate);
+            } else {
+                constDepreciationPerM = depreciationPerMonth;
+            }
+
         }
 
         /////////////// CONDITIONAL////////////////
@@ -139,7 +176,6 @@ public class CalculateReport {
         JSONArray reportArray = new JSONArray();
         JSONArray ammortizationArray = new JSONArray();
         JSONArray detailArray = new JSONArray();
-
 
         JSONObject detail = new JSONObject();
         detail.put("contractMonth", Math.round(monthBetween(startDate, endDate)));
@@ -373,9 +409,40 @@ public class CalculateReport {
             }
 
         }
+        // System.out.println("contract end date: " + endDate);
+        // for (int i = 0; i < amountOfDepreciation; i++) {
+        // if (i == 0) {
+        // JSONObject finalYear = new JSONObject();
+        // finalYear.put("year", startDate.toString());
+        // finalYear.put("deprecationExp", 0);
+        // reportArray.put(finalYear);
+        // } else if (i == 1) {
+        // JSONObject finalYear = new JSONObject();
+        // finalYear.put("year", getNextTerm(contractRegisteredDate,
+        // "monthly").toString());
+        // finalYear.put("deprecationExp", formatToTwoDecimalPlaces(depreciationFirst));
+        // reportArray.put(finalYear);
+        // startDate = getNextTerm(contractRegisteredDate, "monthly");
+        // } else if (i == (amountOfDepreciation - 1) || (startDate ==
+        // getNextTerm(endDate, "yearly"))) {
+        // double depreciationLast = constDepreciationPerM - depreciationFirst1;
+        // JSONObject finalYear = new JSONObject();
+        // finalYear.put("year", getNextTerm(startDate, "monthly").toString());
+        // finalYear.put("deprecationExp", formatToTwoDecimalPlaces(depreciationLast));
+        // reportArray.put(finalYear);
+        // break;
+        // } else {
+        // JSONObject reportEntry = new JSONObject();
+        // reportEntry.put("year", getNextTerm(startDate, "monthly").toString());
+        // reportEntry.put("deprecationExp",
+        // formatToTwoDecimalPlaces(constDepreciationPerM));
+        // reportArray.put(reportEntry);
+        // startDate = getNextTerm(startDate, "monthly");
+        // }
+        // }
 
-
-        for (int i = 0; i < amountOfDepreciation; i++) {
+        System.out.println("contractRegisteredDate: " + contractRegisteredDate);
+        for (int i = 0; i < monthBetweens; i++) {
             if (i == 0) {
                 JSONObject finalYear = new JSONObject();
                 finalYear.put("year", startDate.toString());
@@ -383,11 +450,13 @@ public class CalculateReport {
                 reportArray.put(finalYear);
             } else if (i == 1) {
                 JSONObject finalYear = new JSONObject();
-                finalYear.put("year", getNextTerm(contractRegisteredDate, "monthly").toString());
+                finalYear.put("year", getNextTerm(contractRegisteredDate,
+                        "monthly").toString());
                 finalYear.put("deprecationExp", formatToTwoDecimalPlaces(depreciationFirst));
                 reportArray.put(finalYear);
                 startDate = getNextTerm(contractRegisteredDate, "monthly");
-            } else if (i == (amountOfDepreciation - 1) || (startDate == getNextTerm(endDate, "yearly"))) {
+            } else if (i == (monthBetweens - 1) || (startDate == getNextTerm(endDate,
+                    "yearly"))) {
                 double depreciationLast = constDepreciationPerM - depreciationFirst1;
                 JSONObject finalYear = new JSONObject();
                 finalYear.put("year", getNextTerm(startDate, "monthly").toString());
@@ -397,7 +466,8 @@ public class CalculateReport {
             } else {
                 JSONObject reportEntry = new JSONObject();
                 reportEntry.put("year", getNextTerm(startDate, "monthly").toString());
-                reportEntry.put("deprecationExp", formatToTwoDecimalPlaces(constDepreciationPerM));
+                reportEntry.put("deprecationExp",
+                        formatToTwoDecimalPlaces(constDepreciationPerM));
                 reportArray.put(reportEntry);
                 startDate = getNextTerm(startDate, "monthly");
             }
@@ -423,52 +493,94 @@ public class CalculateReport {
     public static String calculateReportY(long Id, LocalDate startDate, LocalDate endDate, double rightOfUse,
             double depreciationPerMonth, String type, double totalPayment, double advancePayment,
             double discountRate, double leaseLiability, LocalDate contractRegisteredDate, String installmentDetails,
-            long BranchId, String contractType, LocalDate contractStartDates) {
+            long BranchId, String contractType, LocalDate contractStartDates, LocalDate contractEndDates) {
 
         double firstRemainingMonth = 0;
         double firstsMonth = 0;
         double constDepreciationPerY = 0;
         double constDepreciationPerM = 0;
-        if (totalPayment == advancePayment) {
-            firstRemainingMonth = monthBetween(startDate, getNextTerm(contractRegisteredDate, "yearly"));
-            firstsMonth = monthBetween(startDate, getNextTerm(startDate, "yearly"));
-            constDepreciationPerY = (totalPayment / calculateContractMonths(startDate, endDate)) * 12;
-            constDepreciationPerM = (totalPayment / calculateContractMonths(startDate, endDate));
+        double advancePayments = advancePayment;
+        double yearbetween = yearsBetween(contractRegisteredDate, contractEndDates);
 
-        } else {
-            firstRemainingMonth = monthBetween(startDate, getNextTerm(contractRegisteredDate, "yearly"));
-            firstsMonth = monthBetween(startDate, getNextTerm(startDate, "yearly"));
+        if (installmentDetails != null) {
 
-            constDepreciationPerY = depreciationPerMonth * 12;
-            constDepreciationPerM = constDepreciationPerY / 12;
+            JSONObject jsonObject = new JSONObject(installmentDetails);
 
+            Map<LocalDate, BigDecimal> installmentMap = new TreeMap<>();
+
+            for (String key : jsonObject.keySet()) {
+                BigDecimal value = jsonObject.getBigDecimal(key);
+                LocalDate date = LocalDate.parse(key); // Parse the date string into a LocalDate
+                installmentMap.put(date, value);
+            }
+
+            for (Map.Entry<LocalDate, BigDecimal> entry : installmentMap.entrySet()) {
+                LocalDate installmentDate = entry.getKey();
+                BigDecimal installmentAmount = entry.getValue();
+                double futureLeasePayments = installmentAmount.doubleValue();
+                System.out.println("advancePayment:----------------- " + advancePayments);
+                if (installmentDate.isBefore(contractRegisteredDate) || getNextTerm(contractRegisteredDate, "yearly")
+                        .isEqual(getNextTerm(installmentDate, "yearly"))) {
+                    yearbetween += 1;
+
+                    advancePayments += futureLeasePayments;
+                    System.out.println("advancePayments: " + advancePayments);
+
+                } else {
+                    yearbetween += 2;
+                }
+
+            }
+
+            System.out.println("advancePayments: " + advancePayments);
+            System.out.println("totalPayment: " + totalPayment);
+
+            if (totalPayment == advancePayments) {
+                firstRemainingMonth = monthBetween(startDate, getNextTerm(contractRegisteredDate, "yearly"));
+                firstsMonth = monthBetween(startDate, getNextTerm(startDate, "yearly"));
+                constDepreciationPerY = (totalPayment / calculateContractMonths(startDate, endDate)) * 12;
+                constDepreciationPerM = (totalPayment / calculateContractMonths(startDate, endDate));
+                System.out.println("constDepreciationPerY: " + constDepreciationPerY);
+
+            } else {
+                firstRemainingMonth = monthBetween(startDate, getNextTerm(contractRegisteredDate, "yearly"));
+                firstsMonth = monthBetween(startDate, getNextTerm(startDate, "yearly"));
+
+                constDepreciationPerY = depreciationPerMonth * 12;
+                constDepreciationPerM = constDepreciationPerY / 12;
+                System.out.println("constDepreciationPerY: " + constDepreciationPerY);
+
+            }
         }
-        // check
 
-        /////////////// CONDITIONAL////////////////
-        LocalDate targetDate = LocalDate.of(contractRegisteredDate.getYear(), 6, 30);
-        int amountOfDepreciation = 0;
-        if (isBefore(contractRegisteredDate, targetDate) == -1) {
-            amountOfDepreciation = 2;
-        } else if (isBefore(contractRegisteredDate, targetDate) == 1
-                & (contractRegisteredDate.getYear() == startDate.getYear())) {
-            amountOfDepreciation = 1;
-        } else if (isBefore(contractRegisteredDate, targetDate) == 1) {
-            amountOfDepreciation = 2;
-        } else if (isBefore(contractRegisteredDate, targetDate) == 0) {
-            amountOfDepreciation = 1;
-        }
+        // // check
 
+        // /////////////// CONDITIONAL////////////////
+        // LocalDate targetDate = LocalDate.of(contractRegisteredDate.getYear(), 6, 30);
+        // int amountOfDepreciation = 0;
+        // if (isBefore(contractRegisteredDate, targetDate) == -1) {
+        // amountOfDepreciation = 2;
+        // } else if (isBefore(contractRegisteredDate, targetDate) == 1
+        // & (contractRegisteredDate.getYear() == startDate.getYear())) {
+        // amountOfDepreciation = 1;
+        // } else if (isBefore(contractRegisteredDate, targetDate) == 1) {
+        // amountOfDepreciation = 2;
+        // } else if (isBefore(contractRegisteredDate, targetDate) == 0) {
+        // amountOfDepreciation = 1;
+        // }
 
-        amountOfDepreciation += yearsBetween(contractRegisteredDate, endDate) + 1;
-        System.out.println(
-                "yearsBetween(contractRegisteredDate, endDate) " + yearsBetween(contractRegisteredDate, endDate));
+        // amountOfDepreciation += yearsBetween(contractRegisteredDate, endDate) + 1;
+        // System.out.println(
+        // "yearsBetween(contractRegisteredDate, endDate) " +
+        // yearsBetween(contractRegisteredDate, endDate));
 
-        System.out.println(
-                "-----------------------------contractRegisteredDate---------------------" + contractRegisteredDate);
-        System.out.println(
-                "---------------------------------------------------year amount of depreciation--------- "
-                        + amountOfDepreciation);
+        // System.out.println(
+        // "-----------------------------contractRegisteredDate---------------------" +
+        // contractRegisteredDate);
+        // System.out.println(
+        // "---------------------------------------------------year amount of
+        // depreciation--------- "
+        // + amountOfDepreciation);
         JSONArray reportArray = new JSONArray();
         JSONArray ammortizationArray = new JSONArray();
         JSONArray detailArray = new JSONArray();
@@ -508,6 +620,55 @@ public class CalculateReport {
 
                 depreciationFirstPeriod = depreciationF * constDepreciationPerM;
 
+            }
+        }
+
+        System.out.println("end date" + contractEndDates);
+        System.out.println("yearbetween: " + yearbetween);
+        for (int i = 0; i < yearbetween; i++) {
+            if (i == 0) {
+                balance = rightOfUse;
+                JSONObject finalYear = new JSONObject();
+                finalYear.put("year", contractStartDates.toString());
+                finalYear.put("balance", formatToTwoDecimalPlaces(balance));
+                finalYear.put("deprecationExp", 0);
+                finalYear.put("months", "-");
+                reportArray.put(finalYear);
+            } else if (i == 1) {
+                balance = rightOfUse - depreciationFirstPeriod;
+                JSONObject finalYear = new JSONObject();
+                finalYear.put("year", getNextTerm(contractRegisteredDate, "yearly").toString());
+                finalYear.put("balance", formatToTwoDecimalPlaces(balance));
+                finalYear.put("deprecationExp", formatToTwoDecimalPlaces(depreciationFirstPeriod));
+                finalYear.put("months", firstRemainingMonth);
+                reportArray.put(finalYear);
+                startDate = getNextTerm(contractRegisteredDate, "yearly");
+            } else if (i == (yearbetween - 1) || (startDate == getNextTerm(endDate, "yearly"))) {
+                // balance -= constDepreciationPerY;
+                depreciationBeforeLast = formatToTwoDecimalPlaces(balance);
+
+                // double depreciationLast = depreciationPerMonth * (12 - firstRemainingMonth);
+                JSONObject finalYear = new JSONObject();
+                finalYear.put("year", getNextTerm(startDate, "yearly").toString());
+                finalYear.put("balance", 0);
+                // finalYear.put("deprecationExp", formatToTwoDecimalPlaces(depreciationLast));
+                finalYear.put("deprecationExp", depreciationBeforeLast);
+                finalYear.put("months", 12 - firstsMonth);
+
+                reportArray.put(finalYear);
+                break;
+            } else {
+                balance -= constDepreciationPerY;
+                JSONObject reportEntry = new JSONObject();
+                reportEntry.put("year", getNextTerm(startDate, "yearly").toString());
+                reportEntry.put("balance", formatToTwoDecimalPlaces(balance));
+                // if (i == (amountOfDepreciation - 2)) {
+                // depreciationBeforeLast = formatToTwoDecimalPlaces(balance);
+                // }
+                reportEntry.put("deprecationExp", formatToTwoDecimalPlaces(constDepreciationPerY));
+                reportEntry.put("months", "12");
+                reportArray.put(reportEntry);
+                startDate = getNextTerm(startDate, "yearly");
             }
         }
 
@@ -551,6 +712,7 @@ public class CalculateReport {
                                 .equals(getNextTerm(installmentDate, "yearly"))) {
                     break;
                 }
+
 
                 for (int i = 0; i <= yearsBetween; i++) {
 
@@ -666,54 +828,6 @@ public class CalculateReport {
             }
 
         }
-
-
-        for (int i = 0; i < amountOfDepreciation; i++) {
-            if (i == 0) {
-                balance = rightOfUse;
-                JSONObject finalYear = new JSONObject();
-                finalYear.put("year", contractStartDates.toString());
-                finalYear.put("balance", formatToTwoDecimalPlaces(balance));
-                finalYear.put("deprecationExp", 0);
-                finalYear.put("months", "-");
-                reportArray.put(finalYear);
-            } else if (i == 1) {
-                balance = rightOfUse - depreciationFirstPeriod;
-                JSONObject finalYear = new JSONObject();
-                finalYear.put("year", getNextTerm(contractRegisteredDate, "yearly").toString());
-                finalYear.put("balance", formatToTwoDecimalPlaces(balance));
-                finalYear.put("deprecationExp", formatToTwoDecimalPlaces(depreciationFirstPeriod));
-                finalYear.put("months", firstRemainingMonth);
-                reportArray.put(finalYear);
-                startDate = getNextTerm(contractRegisteredDate, "yearly");
-            } else if (i == (amountOfDepreciation - 1) || (startDate == getNextTerm(endDate, "yearly"))) {
-                // balance -= constDepreciationPerY;
-                depreciationBeforeLast = formatToTwoDecimalPlaces(balance);
-
-                // double depreciationLast = depreciationPerMonth * (12 - firstRemainingMonth);
-                JSONObject finalYear = new JSONObject();
-                finalYear.put("year", getNextTerm(startDate, "yearly").toString());
-                finalYear.put("balance", 0);
-                // finalYear.put("deprecationExp", formatToTwoDecimalPlaces(depreciationLast));
-                finalYear.put("deprecationExp", depreciationBeforeLast);
-                finalYear.put("months", 12 - firstsMonth);
-
-                reportArray.put(finalYear);
-                break;
-            } else {
-                balance -= constDepreciationPerY;
-                JSONObject reportEntry = new JSONObject();
-                reportEntry.put("year", getNextTerm(startDate, "yearly").toString());
-                reportEntry.put("balance", formatToTwoDecimalPlaces(balance));
-                // if (i == (amountOfDepreciation - 2)) {
-                // depreciationBeforeLast = formatToTwoDecimalPlaces(balance);
-                // }
-                reportEntry.put("deprecationExp", formatToTwoDecimalPlaces(constDepreciationPerY));
-                reportEntry.put("months", "12");
-                reportArray.put(reportEntry);
-                startDate = getNextTerm(startDate, "yearly");
-            }
-        }
         JSONObject reportObject = new JSONObject();
         reportObject.put("detail", detailArray);
         reportObject.put("report", reportArray);
@@ -732,6 +846,12 @@ public class CalculateReport {
         double averageDaysInMonth = 365.25 / 12; // Approximate average number of
 
         return ChronoUnit.DAYS.between(startDate, endDate) / averageDaysInMonth;
+    }
+
+    static double monthBetweens(LocalDate startDate, LocalDate endDate) {
+        double averageDaysInMonth = 365.25 / 12; // Approximate average number of
+
+        return ChronoUnit.MONTHS.between(startDate, endDate);
     }
 
     static int isBefore(LocalDate startDate, LocalDate targetDate) {
@@ -818,6 +938,10 @@ public class CalculateReport {
             for (Map.Entry<LocalDate, BigDecimal> entry : installmentMap.entrySet()) {
                 LocalDate installmentDate = entry.getKey();
                 BigDecimal installmentAmount = entry.getValue();
+                if (installmentDate.isBefore(contractRegisteredDate) || getNextTerm(contractRegisteredDate, "yearly")
+                        .isEqual(getNextTerm(installmentDate, "yearly"))) {
+                    break;
+                }
 
                 if (numberofinstallment == 1
                         && (getNextTerm(contractRegisteredDate, "yearly") == getNextTerm(installmentDate, "yearly"))) {
@@ -859,11 +983,48 @@ public class CalculateReport {
     }
 
     public double calculateRightOfUseAsset(double advancePayments, double leaseLiability,
-            double leaseIncentives, double initialDirectCosts) {
-        double rightOfUseAsset = (advancePayments + leaseLiability + initialDirectCosts) - leaseIncentives;
-        return Math.round(rightOfUseAsset * 100.0) / 100.0;
-    }
+            double leaseIncentives, double initialDirectCosts, String installmentDetails,
+            LocalDate contractRegisteredDate) {
 
+        double rightOfUseAsset = 0;
+        if (installmentDetails != null) {
+
+            JSONObject jsonObject = new JSONObject(installmentDetails);
+
+            // Create a map to store installment dates and amounts
+            Map<LocalDate, BigDecimal> installmentMap = new TreeMap<>();
+
+            // Iterate through the JSON object and populate the map
+            for (String key : jsonObject.keySet()) {
+                BigDecimal value = jsonObject.getBigDecimal(key);
+                LocalDate date = LocalDate.parse(key); // Parse the date string into a LocalDate
+                installmentMap.put(date, value);
+
+            }
+
+            // Now you have a map where keys are LocalDate objects and values are
+            // installment amounts
+            // You can access them as needed
+            for (Map.Entry<LocalDate, BigDecimal> entry : installmentMap.entrySet()) {
+                LocalDate installmentDate = entry.getKey();
+                BigDecimal installmentAmount = entry.getValue();
+                if (installmentDate.isBefore(contractRegisteredDate) || getNextTerm(contractRegisteredDate, "yearly")
+                        .isEqual(getNextTerm(installmentDate, "yearly"))) {
+                    rightOfUseAsset = advancePayments + installmentAmount.doubleValue();
+                    System.out.println("rightOfUseAsset: " + (int) rightOfUseAsset);
+
+                }
+
+                else {
+                    rightOfUseAsset = (advancePayments + leaseLiability + initialDirectCosts) - leaseIncentives;
+
+                }
+            }
+
+        }
+        return Math.round(rightOfUseAsset * 100.0) / 100.0;
+
+    }
     public double calculateDepreciationPerMonth(double rightOfUseAsset, double period) {
         period = Math.round(period);
         double depreciationPerMonth = rightOfUseAsset / period;

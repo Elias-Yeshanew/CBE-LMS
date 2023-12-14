@@ -16,6 +16,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -44,6 +45,9 @@ public class Lease {
 
     @Column(name = "total_payment", nullable = false)
     private BigDecimal totalPayment;
+
+    @Transient
+    private Double leaseLiability;
 
     @Column(name = "advance_payment")
     private BigDecimal advancePayment;
@@ -103,6 +107,10 @@ public class Lease {
 
     public Long getId() {
         return id;
+    }
+
+    public int getContractRegisteredYear() {
+        return contractRegisteredDate.getYear();
     }
 
     public void setId(Long id) {
