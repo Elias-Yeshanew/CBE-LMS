@@ -1,5 +1,11 @@
 package com.example.demo.lease.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.lease.Model.Branch;
@@ -67,4 +73,53 @@ public class BranchService {
         return branchRepository.save(branch);
     }
 
+    public Map<String, Object> getAllBranches(int page, int size) {
+        PageRequest pageable = PageRequest.of(page - 1, size); // Adjust the page number
+        Page<Branch> branchPage = branchRepository.findAll(pageable);
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("pagination", PaginationUtil.buildPagination(page, size, branchPage.getTotalElements()));
+
+        response.put("branches",
+                branchPage.getContent().stream().map(this::mapBranch).collect(Collectors.toList()));
+
+        return response;
+    }
+
+    private Map<String, Object> mapBranch(Branch branch) {
+        Map<String, Object> branchData = new HashMap<>();
+        branchData.put("branchId", branch.getBranchId());
+        branchData.put("branchName", branch.getBranchName());
+        branchData.put("branchCode", branch.getBranchCode());
+        branchData.put("location", branch.getLocation());
+        branchData.put("costCenter", branch.getCostCenter());
+        branchData.put("claimAccount", branch.getClaimAccount());
+        branchData.put("district", branch.getDistrict());
+        branchData.put("politicalRegion", branch.getPoliticalRegion());
+        // Include other branch fields
+
+        return branchData;
+    }
+
+    public Branch updateBranchById(Long branchId, Branch updatedBranch) throws Exception {
+        Branch existingBranch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new IllegalArgumentException("Branch not found"));
+
+        // Update fields based on your requirements
+        existingBranch.setBranchName(updatedBranch.getBranchName());
+        existingBranch.setBranchCode(updatedBranch.getBranchCode());
+        existingBranch.setLocation(updatedBranch.getLocation());
+        existingBranch.setCostCenter(updatedBranch.getCostCenter());
+        existingBranch.setClaimAccount(updatedBranch.getClaimAccount());
+
+        // Update the district if it's provided
+        if (updatedBranch.getDistrict() != null) {
+            District existingDistrict = districtRepository.findById(updatedBranch.getDistrict().getDistrictId())
+                    .orElseThrow(() -> new IllegalArgumentException("District not found"));
+            existingBranch.setDistrict(existingDistrict);
+        }
+
+        return branchRepository.save(existingBranch);
+    }
 }

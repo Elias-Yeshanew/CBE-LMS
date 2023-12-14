@@ -165,13 +165,14 @@ public class CalculateReport {
         }
 
         /////////////// CONDITIONAL////////////////
-        int amountOfDepreciation;
-        if (startDate.getDayOfMonth() == startDate.lengthOfMonth()) {
-            amountOfDepreciation = 1;
-        } else {
-            amountOfDepreciation = 2;
-        }
-        amountOfDepreciation += calculateContractMonths(contractRegisteredDate, endDate);
+        // int amountOfDepreciation;
+        // if (startDate.getDayOfMonth() == startDate.lengthOfMonth()) {
+        // amountOfDepreciation = 1;
+        // } else {
+        // amountOfDepreciation = 2;
+        // }
+        // amountOfDepreciation += calculateContractMonths(contractRegisteredDate,
+        /////////////// endDate);
 
         JSONArray reportArray = new JSONArray();
         JSONArray ammortizationArray = new JSONArray();
@@ -849,8 +850,6 @@ public class CalculateReport {
     }
 
     static double monthBetweens(LocalDate startDate, LocalDate endDate) {
-        double averageDaysInMonth = 365.25 / 12; // Approximate average number of
-
         return ChronoUnit.MONTHS.between(startDate, endDate);
     }
 
