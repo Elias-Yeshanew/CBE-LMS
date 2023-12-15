@@ -131,4 +131,8 @@ public class BranchService {
 
         return branchRepository.save(existingBranch);
     }
+
+    public void deleteBranchById(Long branchId) {
+        branchRepository.deleteById(branchId);
+    }
 }

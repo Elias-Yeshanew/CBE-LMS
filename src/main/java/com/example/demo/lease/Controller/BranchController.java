@@ -4,8 +4,10 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -89,4 +91,15 @@ public class BranchController {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
+    @DeleteMapping("/deleteBranch/{branchId}")
+    public ResponseEntity<String> deleteBranchById(@PathVariable Long branchId) {
+        try {
+            branchService.deleteBranchById(branchId);
+            return new ResponseEntity<>("Branch deleted successfully", HttpStatus.OK);
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

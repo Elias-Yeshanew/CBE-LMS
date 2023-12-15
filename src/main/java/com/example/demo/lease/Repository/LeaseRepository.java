@@ -35,7 +35,6 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
 
         List<Lease> findByBranch(Branch branch);
 
-
         List<Lease> findAllByAuthorizationTrue();
 
         Page<Lease> findByContractEndDateBeforeAndAuthorizationIsTrue(LocalDate date, PageRequest pageable);
@@ -61,14 +60,6 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
         List<Lease> findByBranchIdWithBranchName(@Param("branchId") Long branchId);
 
         List<Lease> findByBranchIdAndContractRegisteredDateContaining(Long branchId, Integer contractRegisteredDate);
-        // List<Lease> findByBranchIdAndContractRegisteredDateYear(Long branchId, int
-        // contractRegistrationYear);
-
-        // @Query("SELECT l FROM Lease l WHERE l.branchId = :branchId AND
-        // FUNCTION('YEAR', l.contractRegisteredDate) = :year")
-        // List<Lease> findByBranchIdAndContractRegisteredDateYear(@Param("branchId")
-        // Long branchId,
-        // @Param("year") int year);
 
         @Query("SELECT l FROM Lease l " +
                         "WHERE YEAR(l.contractRegisteredDate) = :registeredYear " +
@@ -80,5 +71,34 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
                         @Param("endYear") int endYear,
                         PageRequest pageable);
 
+
+        @Query("SELECT l FROM Lease l WHERE l.branch.id = :branchId AND FUNCTION('YEAR', l.contractRegisteredDate) = :year")
+        List<Lease> findByBranchIdAndContractRegisteredDateYear(@Param("branchId") Long branchId,
+                        @Param("year") int year);
+
+        @Query("SELECT l FROM Lease l WHERE l.branch.district.id = :districtId AND (:contractRegisteredDate IS null OR YEAR(l.contractRegisteredDate) = :contractRegisteredDate)")
+        List<Lease> findByBranchDistrictDistrictIdAndContractRegisteredDateYear(
+                        @Param("districtId") Long districtId,
+                        @Param("contractRegisteredDate") Integer contractRegisteredDate);
+
+        @Query("SELECT l FROM Lease l JOIN l.branch b WHERE b.district.districtId = :districtId AND EXTRACT(YEAR FROM l.contractRegisteredDate) = :year")
+        List<Lease> findByDistrictIdAndContractRegisteredDateYear(Long districtId, Integer year);
+
+        // @Query("SELECT l FROM Lease l WHERE l.districtId = :districtId AND
+        // FUNCTION('YEAR', l.contractRegisteredDate) >= :startYear")
+        // List<Lease>
+        // findByDistrictIdAndContractRegisteredDateYear(@Param("districtId") Long
+        // districtId,
+        // @Param("startYear") int startYear);
+
+        // @Query("SELECT l FROM Lease l WHERE l.branch.district.id = :districtId")
+        // List<Lease>
+        // findByDistrictIdAndContractRegisteredDateYear(@Param("districtId") Long
+        // districtId);
+
+        @Query("SELECT l FROM Lease l WHERE l.branch.district.id = :districtId AND YEAR(l.contractRegisteredDate) = :startYear")
+        List<Lease> findByDistrictIdAndContractRegisteredDateYear(
+                        @Param("districtId") Long districtId,
+                        @Param("startYear") int startYear);
 
 }

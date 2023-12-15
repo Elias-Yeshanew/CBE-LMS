@@ -124,7 +124,6 @@ public class LeaseService {
         return response;
     }
 
-
     public Map<String, Object> getAllActiveLeases(int page, int size) {
         // LocalDate currentDate = LocalDate.now();
         // List<Lease> leases =
@@ -188,10 +187,9 @@ public class LeaseService {
             }
         }
 
-    String[] result = new String[emptyNames.size()];
-    return emptyNames.toArray(result);
-}
-
+        String[] result = new String[emptyNames.size()];
+        return emptyNames.toArray(result);
+    }
 
     public JSONObject deleteLease(Long id) {
         Optional<Lease> leaseOptional = leaseRepository.findById(id);
@@ -463,8 +461,32 @@ public class LeaseService {
         return response;
     }
 
-    public List<Lease> getLeasesByBranchIdAndContractRegisteredYear(Long branchId, Integer startYear) {
-        return leaseRepository.findByBranchIdAndContractRegisteredDateContaining(branchId, startYear);
+    public List<Lease> getLeasesByBranchIdAndContractRegistrationYear(Long branchId, int contractRegistrationYear) {
+        return leaseRepository.findByBranchIdAndContractRegisteredDateYear(branchId, contractRegistrationYear);
     }
 
+    // public List<Lease> getLeasesByDistrictId(Long districtId, int stratYear) {
+    // return
+    // leaseRepository.findByDistrictIdAndContractRegisteredDateYear(districtId,
+    // stratYear);
+    // }
+
+    // public List<Lease> getLeasesByDistrictId(Long districtId, int startYear) {
+    // return
+    // leaseRepository.findByDistrictIdAndContractRegisteredDateYear(districtId,
+    // startYear);
+    // }
+    public List<Lease> getLeasesByDistrictIdAndStartYear(Long districtId, int startYear) {
+        return leaseRepository.findByDistrictIdAndContractRegisteredDateYear(districtId, startYear);
+    }
+
+    public List<Lease> findByBranchDistrictDistrictIdAndContractRegisteredDateYear(Long districtId,
+            Integer contractRegisteredDate) {
+        return leaseRepository.findByBranchDistrictDistrictIdAndContractRegisteredDateYear(districtId,
+                contractRegisteredDate);
+    }
+
+    public List<Lease> findByDistrictId(Long districtId) {
+        return leaseRepository.findByDistrictIdQuery(districtId);
+    }
 }

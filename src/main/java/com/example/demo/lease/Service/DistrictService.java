@@ -34,10 +34,6 @@ public class DistrictService {
         return districtRepository.saveAll(districts);
     }
 
-    // public District addNewDistrict(District district) throws Exception {
-    // return districtRepository.save(district);
-    // }
-
     public District addNewDistrict(District district) throws Exception {
         // Load the Region from the database using its regionId
         Region existingRegion = regionRepository.findById(district.getRegion().getRegionId())
@@ -71,6 +67,8 @@ public class DistrictService {
         districtData.put("districtId", district.getDistrictId());
         districtData.put("districtName", district.getDistrictName());
         districtData.put("region", district.getRegion());
+        districtData.put("leaseLiabilityAccount", district.getLeaseLiabilityAccount());
+        districtData.put("rouAccount", district.getRouAccount());
         districtData.put("branchCount", branchCount);
         // Include other district fields
 
@@ -83,6 +81,8 @@ public class DistrictService {
 
         // Update fields based on your requirements
         existingDistrict.setDistrictName(updatedDistrict.getDistrictName());
+        existingDistrict.setLeaseLiabilityAccount(updatedDistrict.getLeaseLiabilityAccount());
+        existingDistrict.setRouAccount(updatedDistrict.getRouAccount());
 
         // Update the region if it's provided
         if (updatedDistrict.getRegion() != null) {
@@ -102,5 +102,9 @@ public class DistrictService {
 
         return response;
 
+    }
+
+    public void deleteDistrictById(Long districtId) {
+        districtRepository.deleteById(districtId);
     }
 }

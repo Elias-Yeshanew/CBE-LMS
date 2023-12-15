@@ -15,12 +15,18 @@ import com.example.demo.lease.Service.DistrictService;
 import com.example.demo.lease.Service.LeaseService;
 import org.springframework.beans.factory.annotation.Value;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.http.MediaType;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -248,69 +254,25 @@ public class LeaseController {
     @GetMapping("/byBranchId/{branchId}")
     public ResponseEntity<Object> getLeasesByBranchId(@PathVariable Long branchId,
             @RequestParam(required = false, defaultValue = "0") int startYear) {
-        List<Lease> leases;
         if (startYear != 0) {
-            // Filter leases based on the provided contract registration year
-            leases = leaseRepository.findByBranchIdAndContractRegisteredDateContaining(branchId,
-                    startYear);
+            List<Lease> leases = leaseService.getLeasesByBranchIdAndContractRegistrationYear(branchId, startYear);
+            if (leases.isEmpty()) {
+                Map<String, String> response = new HashMap<>();
+                response.put("message", "No leases found for branch ID: " + branchId + " in the year " + startYear);
+                return new ResponseEntity<Object>(response, HttpStatus.NOT_FOUND);
+            } else {
+                Map<String, Object> response = new HashMap<>();
+                response.put("leases", leases); // Assuming leases is a list of Lease objects
+                return ResponseEntity.ok(response);
+            }
         } else {
-            leases = leaseRepository.findByBranchId(branchId);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Invalid startYear parameter. Please provide a valid year.");
+            return new ResponseEntity<Object>(response, HttpStatus.BAD_REQUEST);
         }
-    if (leases.isEmpty()) {
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "No leases found for branch ID: " + branchId);
-        return ResponseEntity.notFound().build();
-    } else {
-        Map<String, Object> response = new HashMap<>();
-    response.put("leases", mapLeasesToResponse(leases));
-    return ResponseEntity.ok(response);
-}
-}
-
-@GetMapping("/by-branch/{branchId}")
-public ResponseEntity<List<Lease>> getLeasesByBranchId(
-        @PathVariable Long branchId,
-        @RequestParam(required = false) Integer startDate) {
-
-    List<Lease> leases;
-
-    if (startDate != null) {
-        // Use the converted value in your service method
-        leases = leaseService.getLeasesByBranchIdAndContractRegisteredYear(branchId, startDate);
-    } else {
-        leases = leaseService.getLeasesByBranchId(branchId);
     }
 
-    return new ResponseEntity<>(leases, HttpStatus.OK);
-    }
-
-    // @GetMapping("/byBranchId/{branchId}")
-    // public ResponseEntity<Object> getLeasesByBranchId(@PathVariable Long
-    // branchId,
-    // @RequestParam(required = false, defaultValue = "0") int startYear) {
-    // List<Lease> leases;
-
-    // if (startYear != 0) {
-    // // Filter leases based on the provided contract registration year
-    // leases =
-    // leaseRepository.findByBranchIdAndContractRegisteredDateYear(branchId,
-    // startYear);
-    // } else {
-    // leases = leaseRepository.findByBranchId(branchId);
-    // }
-
-    // if (leases.isEmpty()) {
-    // Map<String, String> response = new HashMap<>();
-    // response.put("message", "No leases found for branch ID: " + branchId);
-    // return ResponseEntity.notFound().build();
-    // } else {
-    // Map<String, Object> response = new HashMap<>();
-    // response.put("leases", mapLeasesToResponse(leases));
-    // return ResponseEntity.ok(response);
-    // }
-    // }
-
-    @GetMapping("/byDistrictId/{districtId}")
+    @GetMapping("/byDistrictIds/{districtId}")
     public ResponseEntity<Object> getLeasesByDistrictId(@PathVariable Long districtId) {
         List<Lease> leases = leaseRepository.findByDistrictIdQuery(districtId);
 
@@ -323,6 +285,31 @@ public ResponseEntity<List<Lease>> getLeasesByBranchId(
             response.put("leases", mapLeasesToResponse(leases));
             return ResponseEntity.ok(response);
         }
+
     }
+
+
+    @GetMapping("/byDistrictId/{districtId}")
+    public ResponseEntity<Object> getLeasesByDistrictId(@PathVariable Long districtId,
+            @RequestParam(required = false) Integer startYear) {
+        List<Lease> leases;
+
+        if (startYear != null) {
+            leases = leaseService.findByBranchDistrictDistrictIdAndContractRegisteredDateYear(districtId, startYear);
+        } else {
+            leases = leaseService.findByDistrictId(districtId);
+        }
+
+        if (leases.isEmpty()) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "No leases found for district ID: " + districtId);
+            return ResponseEntity.notFound().build();
+        } else {
+            Map<String, Object> response = new HashMap<>();
+            response.put("leases", mapLeasesToResponse(leases));
+            return ResponseEntity.ok(response);
+        }
+    }
+
 
 }

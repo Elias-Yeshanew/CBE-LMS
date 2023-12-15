@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -89,6 +90,18 @@ public class DistrictController {
             return new ResponseEntity<>(districtData, HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @DeleteMapping("/deleteDistrict/{districtId}")
+    public ResponseEntity<String> deleteDistrictById(@PathVariable Long districtId) {
+        try {
+            districtService.deleteDistrictById(districtId);
+            return new ResponseEntity<>("District deleted successfully", HttpStatus.OK);
+        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }
