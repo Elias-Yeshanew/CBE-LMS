@@ -3,6 +3,7 @@ package com.example.demo.lease.Controller;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,19 +14,22 @@ import com.example.demo.lease.Repository.LeaseRepository;
 import com.example.demo.lease.Service.BranchService;
 import com.example.demo.lease.Service.DistrictService;
 import com.example.demo.lease.Service.LeaseService;
+
+import jakarta.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.core.io.Resource;
+
 import java.io.IOException;
-import java.time.LocalDate;
+import java.net.MalformedURLException;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.http.MediaType;
 import java.nio.file.Path;
@@ -49,6 +53,13 @@ public class LeaseController {
 
     @Value("${file.upload-dir}")
     private String uploadDir;
+
+    private String storageFolderPath;
+
+    @PostConstruct
+    private void init() {
+        storageFolderPath = uploadDir;
+    }
 
     public LeaseController(LeaseService leaseService, BranchService branchService, DistrictService districtService) {
         this.leaseService = leaseService;
@@ -272,22 +283,6 @@ public class LeaseController {
         }
     }
 
-    @GetMapping("/byDistrictIds/{districtId}")
-    public ResponseEntity<Object> getLeasesByDistrictId(@PathVariable Long districtId) {
-        List<Lease> leases = leaseRepository.findByDistrictIdQuery(districtId);
-
-        if (leases.isEmpty()) {
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "No leases found for district ID: " + districtId);
-            return ResponseEntity.notFound().build();
-        } else {
-            Map<String, Object> response = new HashMap<>();
-            response.put("leases", mapLeasesToResponse(leases));
-            return ResponseEntity.ok(response);
-        }
-
-    }
-
 
     @GetMapping("/byDistrictId/{districtId}")
     public ResponseEntity<Object> getLeasesByDistrictId(@PathVariable Long districtId,
@@ -311,5 +306,43 @@ public class LeaseController {
         }
     }
 
+    @GetMapping("/file/{filename:.+}")
+    public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
+        // Get the file path
+        Path filePath = getFilePath(filename);
 
+        // Check if the file exists
+        if (filePath == null || !filePath.toFile().exists()) {
+            // Handle the case when the file does not exist
+            return ResponseEntity.notFound().build();
+        }
+
+        try {
+            // Load file as Resource
+            Resource resource = new org.springframework.core.io.PathResource(filePath);
+
+            // Set Content-Disposition header to force download
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + resource.getFilename());
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentLength(resource.contentLength())
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(resource);
+        } catch (IOException e) {
+            // Handle exceptions appropriately (e.g., log and return an error response)
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    private Path getFilePath(String filename) {
+        // Implement this method based on your actual logic
+        // It should return the Path to the file or handle non-existent files
+        // appropriately
+        // For now, let's assume the files are stored in the uploadDir
+        String uploadDir = storageFolderPath;
+        return Paths.get(uploadDir, filename);
+    }
 }

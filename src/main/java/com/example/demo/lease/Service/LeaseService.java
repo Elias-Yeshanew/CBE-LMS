@@ -465,21 +465,6 @@ public class LeaseService {
         return leaseRepository.findByBranchIdAndContractRegisteredDateYear(branchId, contractRegistrationYear);
     }
 
-    // public List<Lease> getLeasesByDistrictId(Long districtId, int stratYear) {
-    // return
-    // leaseRepository.findByDistrictIdAndContractRegisteredDateYear(districtId,
-    // stratYear);
-    // }
-
-    // public List<Lease> getLeasesByDistrictId(Long districtId, int startYear) {
-    // return
-    // leaseRepository.findByDistrictIdAndContractRegisteredDateYear(districtId,
-    // startYear);
-    // }
-    public List<Lease> getLeasesByDistrictIdAndStartYear(Long districtId, int startYear) {
-        return leaseRepository.findByDistrictIdAndContractRegisteredDateYear(districtId, startYear);
-    }
-
     public List<Lease> findByBranchDistrictDistrictIdAndContractRegisteredDateYear(Long districtId,
             Integer contractRegisteredDate) {
         return leaseRepository.findByBranchDistrictDistrictIdAndContractRegisteredDateYear(districtId,

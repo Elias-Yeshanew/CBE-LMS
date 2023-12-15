@@ -26,23 +26,16 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
 
         long countByContractEndDateBeforeAndAuthorization(LocalDate currentDate, boolean authorization);
 
-        List<Lease> findByBranchIdIn(List<Long> branchIds);
-
-        List<Lease> getLeasesByBranchId(Long branchId);
-
-        @Query("SELECT l FROM Lease l WHERE l.branch.district.id = :districtId")
-        List<Lease> findByDistrictIdQuery(@Param("districtId") Long districtId);
-
         List<Lease> findByBranch(Branch branch);
 
         List<Lease> findAllByAuthorizationTrue();
 
         Page<Lease> findByContractEndDateBeforeAndAuthorizationIsTrue(LocalDate date, PageRequest pageable);
 
-        Page<Lease> findByContractEndDateBetweenAndAuthorizationIsTrue(int startYear, int endYear,
-                        PageRequest pageable);
-
         Page<Lease> findByContractEndDateAfterAndAuthorizationIsTrue(LocalDate date, PageRequest pageable);
+
+        @Query("SELECT l FROM Lease l WHERE l.branch.district.id = :districtId")
+        List<Lease> findByDistrictIdQuery(@Param("districtId") Long districtId);
 
         @Query("SELECT l FROM Lease l " +
                         "WHERE (:startYear IS null OR YEAR(l.contractRegisteredDate) = :startYear) " +
@@ -56,22 +49,6 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
         Page<Lease> findByContractStartDateYearAndContractEndDateYear(int startYear,
                         int endYear, PageRequest pageable);
 
-        @Query("SELECT l, b.branchName as branchName FROM Lease l JOIN l.branch b WHERE b.id = :branchId")
-        List<Lease> findByBranchIdWithBranchName(@Param("branchId") Long branchId);
-
-        List<Lease> findByBranchIdAndContractRegisteredDateContaining(Long branchId, Integer contractRegisteredDate);
-
-        @Query("SELECT l FROM Lease l " +
-                        "WHERE YEAR(l.contractRegisteredDate) = :registeredYear " +
-                        "AND YEAR(l.contractEndDate) = :endYear " +
-                        "AND l.authorization = true " +
-                        "AND l.contractEndDate < :currentDate")
-        Page<Lease> findExpiredLeasesWithAdditionalFilter(@Param("currentDate") LocalDate currentDate,
-                        @Param("registeredYear") int registeredYear,
-                        @Param("endYear") int endYear,
-                        PageRequest pageable);
-
-
         @Query("SELECT l FROM Lease l WHERE l.branch.id = :branchId AND FUNCTION('YEAR', l.contractRegisteredDate) = :year")
         List<Lease> findByBranchIdAndContractRegisteredDateYear(@Param("branchId") Long branchId,
                         @Param("year") int year);
@@ -81,24 +58,5 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
                         @Param("districtId") Long districtId,
                         @Param("contractRegisteredDate") Integer contractRegisteredDate);
 
-        @Query("SELECT l FROM Lease l JOIN l.branch b WHERE b.district.districtId = :districtId AND EXTRACT(YEAR FROM l.contractRegisteredDate) = :year")
-        List<Lease> findByDistrictIdAndContractRegisteredDateYear(Long districtId, Integer year);
-
-        // @Query("SELECT l FROM Lease l WHERE l.districtId = :districtId AND
-        // FUNCTION('YEAR', l.contractRegisteredDate) >= :startYear")
-        // List<Lease>
-        // findByDistrictIdAndContractRegisteredDateYear(@Param("districtId") Long
-        // districtId,
-        // @Param("startYear") int startYear);
-
-        // @Query("SELECT l FROM Lease l WHERE l.branch.district.id = :districtId")
-        // List<Lease>
-        // findByDistrictIdAndContractRegisteredDateYear(@Param("districtId") Long
-        // districtId);
-
-        @Query("SELECT l FROM Lease l WHERE l.branch.district.id = :districtId AND YEAR(l.contractRegisteredDate) = :startYear")
-        List<Lease> findByDistrictIdAndContractRegisteredDateYear(
-                        @Param("districtId") Long districtId,
-                        @Param("startYear") int startYear);
 
 }
