@@ -79,4 +79,14 @@ public class BranchController {
         }
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> getBranchById(@PathVariable Long id) throws Exception {
+        Map<String, Object> branchData = branchService.getBranchById(id);
+
+        if (branchData != null) {
+            return new ResponseEntity<>(branchData, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
 }

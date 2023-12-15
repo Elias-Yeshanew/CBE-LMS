@@ -81,4 +81,14 @@ public class DistrictController {
         }
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> getDistrictById(@PathVariable Long id) throws Exception {
+        Map<String, Object> districtData = districtService.getDistrictById(id);
+
+        if (districtData != null) {
+            return new ResponseEntity<>(districtData, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
 }

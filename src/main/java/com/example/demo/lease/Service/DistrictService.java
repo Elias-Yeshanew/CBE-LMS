@@ -3,6 +3,7 @@ package com.example.demo.lease.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.lease.Model.District;
 import com.example.demo.lease.Model.Region;
+import com.example.demo.lease.Repository.BranchRepository;
 import com.example.demo.lease.Repository.DistrictRepository;
 import com.example.demo.lease.Repository.RegionRepository;
 
@@ -22,6 +24,7 @@ public class DistrictService {
 
     private final DistrictRepository districtRepository;
     private final RegionRepository regionRepository;
+    private final BranchRepository branchRepository;
 
     public long getDistrictCount() {
         return districtRepository.count();
@@ -62,10 +65,13 @@ public class DistrictService {
     }
 
     private Map<String, Object> mapDistrict(District district) {
+
+        Long branchCount = branchRepository.countByDistrict(district);
         Map<String, Object> districtData = new HashMap<>();
         districtData.put("districtId", district.getDistrictId());
         districtData.put("districtName", district.getDistrictName());
         districtData.put("region", district.getRegion());
+        districtData.put("branchCount", branchCount);
         // Include other district fields
 
         return districtData;
@@ -86,5 +92,15 @@ public class DistrictService {
         }
 
         return districtRepository.save(existingDistrict);
+    }
+
+    public Map<String, Object> getDistrictById(Long districtId) throws Exception {
+        Optional<District> optionalDistrict = districtRepository.findById(districtId);
+        Map<String, Object> response = new HashMap<>();
+        response.put("district",
+                optionalDistrict.map(this::mapDistrict));
+
+        return response;
+
     }
 }

@@ -2,6 +2,7 @@ package com.example.demo.lease.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -9,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.lease.Model.Region;
+import com.example.demo.lease.Repository.DistrictRepository;
 import com.example.demo.lease.Repository.RegionRepository;
 
 import lombok.AllArgsConstructor;
@@ -17,6 +19,7 @@ import lombok.AllArgsConstructor;
 @Service
 public class RegionService {
     private final RegionRepository regionRepository;
+    private final DistrictRepository districtRepository;
 
     public Region addNewRegion(Region region) throws Exception {
         return regionRepository.save(region);
@@ -36,10 +39,21 @@ public class RegionService {
         return response;
     }
 
+    public Map<String, Object> getRegionById(long regionId) {
+        Optional<Region> optionalRegion = regionRepository.findById(regionId);
+        Map<String, Object> response = new HashMap<>();
+        response.put("region", optionalRegion
+                .map(this::mapRegion));
+        return response;
+    }
+
     private Map<String, Object> mapRegion(Region region) {
+
+        Long districtCount = districtRepository.countByRegion(region);
         Map<String, Object> regionData = new HashMap<>();
         regionData.put("regionId", region.getRegionId());
         regionData.put("regionName", region.getRegionName());
+        regionData.put("districtCount", districtCount);
         // Include other region fields
 
         return regionData;

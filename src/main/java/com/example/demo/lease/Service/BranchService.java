@@ -2,6 +2,7 @@ package com.example.demo.lease.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -71,6 +72,14 @@ public class BranchService {
 
     public Branch addNewBranchs(Branch branch) throws Exception {
         return branchRepository.save(branch);
+    }
+
+    public Map<String, Object> getBranchById(long branchId) {
+        Optional<Branch> optionalBranch = branchRepository.findById(branchId);
+        Map<String, Object> branchdata = new HashMap<>();
+        branchdata.put("branch",
+                optionalBranch.map(this::mapBranch));
+        return branchdata;
     }
 
     public Map<String, Object> getAllBranches(int page, int size) {

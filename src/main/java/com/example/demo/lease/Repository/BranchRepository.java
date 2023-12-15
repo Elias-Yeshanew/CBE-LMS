@@ -17,5 +17,7 @@ public interface BranchRepository extends JpaRepository<Branch, Long> {
 
     long count();
 
+    long countByDistrict(District district); // Add this method
+
     // Add any other custom query methods if needed
 }
