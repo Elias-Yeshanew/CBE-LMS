@@ -474,4 +474,8 @@ public class LeaseService {
     public List<Lease> findByDistrictId(Long districtId) {
         return leaseRepository.findByDistrictIdQuery(districtId);
     }
+
+    public List<Lease> findLeasesByBranchId(Long branchId) {
+        return leaseRepository.findLeasesByBranchId(branchId);
+    }
 }

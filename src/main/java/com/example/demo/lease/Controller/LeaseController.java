@@ -24,6 +24,7 @@ import org.springframework.core.io.Resource;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URLConnection;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -273,16 +274,21 @@ public class LeaseController {
                 return new ResponseEntity<Object>(response, HttpStatus.NOT_FOUND);
             } else {
                 Map<String, Object> response = new HashMap<>();
-                response.put("leases", leases); // Assuming leases is a list of Lease objects
+                response.put("leases", mapLeasesToResponse(leases));
+                // response.put("leases", leases); // Assuming leases is a list of Lease objects
                 return ResponseEntity.ok(response);
             }
         } else {
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Invalid startYear parameter. Please provide a valid year.");
-            return new ResponseEntity<Object>(response, HttpStatus.BAD_REQUEST);
+
+            List<Lease> leases = leaseService.findLeasesByBranchId(branchId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("leases", mapLeasesToResponse(leases));
+            // response.put("leases", leases); // Assuming leases is a list of Lease objects
+            return ResponseEntity.ok(response);
+
         }
     }
-
 
     @GetMapping("/byDistrictId/{districtId}")
     public ResponseEntity<Object> getLeasesByDistrictId(@PathVariable Long districtId,
@@ -306,8 +312,39 @@ public class LeaseController {
         }
     }
 
+    // @GetMapping("/file/{filename:.+}")
+    // public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
+    // // Get the file path
+    // Path filePath = getFilePath(filename);
+
+    // // Check if the file exists
+    // if (filePath == null || !filePath.toFile().exists()) {
+    // // Handle the case when the file does not exist
+    // return ResponseEntity.notFound().build();
+    // }
+
+    // try {
+    // // Load file as Resource
+    // Resource resource = new org.springframework.core.io.PathResource(filePath);
+
+    // // Set Content-Disposition header to force download
+    // HttpHeaders headers = new HttpHeaders();
+    // headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" +
+    // resource.getFilename());
+
+    // return ResponseEntity.ok()
+    // .headers(headers)
+    // .contentLength(resource.contentLength())
+    // .contentType(MediaType.APPLICATION_OCTET_STREAM)
+    // .body(resource);
+    // } catch (IOException e) {
+    // // Handle exceptions appropriately (e.g., log and return an error response)
+    // e.printStackTrace();
+    // return ResponseEntity.status(500).body(null);
+    // }
+    // }
     @GetMapping("/file/{filename:.+}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
+    public ResponseEntity<Resource> viewFile(@PathVariable String filename) {
         // Get the file path
         Path filePath = getFilePath(filename);
 
@@ -321,21 +358,31 @@ public class LeaseController {
             // Load file as Resource
             Resource resource = new org.springframework.core.io.PathResource(filePath);
 
-            // Set Content-Disposition header to force download
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + resource.getFilename());
+        // Set Content-Disposition header to suggest inline display
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + resource.getFilename());
 
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .contentLength(resource.contentLength())
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(resource);
-        } catch (IOException e) {
-            // Handle exceptions appropriately (e.g., log and return an error response)
-            e.printStackTrace();
-            return ResponseEntity.status(500).body(null);
+        // Determine the Content-Type based on the file extension
+        String contentType = URLConnection.guessContentTypeFromName(filename);
+
+        // If the Content-Type cannot be determined, set a default
+        if (contentType == null) {
+            contentType = "application/octet-stream";
         }
+
+        // Set Content-Type header
+        headers.setContentType(MediaType.parseMediaType(contentType));
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentLength(resource.contentLength())
+                .body(resource);
+    } catch (IOException e) {
+        // Handle exceptions appropriately (e.g., log and return an error response)
+        e.printStackTrace();
+        return ResponseEntity.status(500).body(null);
     }
+}
 
     private Path getFilePath(String filename) {
         // Implement this method based on your actual logic

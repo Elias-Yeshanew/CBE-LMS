@@ -37,6 +37,9 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
         @Query("SELECT l FROM Lease l WHERE l.branch.district.id = :districtId")
         List<Lease> findByDistrictIdQuery(@Param("districtId") Long districtId);
 
+        @Query("SELECT l FROM Lease l WHERE l.branch.branchId = :branchId")
+        List<Lease> findLeasesByBranchId(@Param("branchId") Long branchId);
+
         @Query("SELECT l FROM Lease l " +
                         "WHERE (:startYear IS null OR YEAR(l.contractRegisteredDate) = :startYear) " +
                         "OR (:endYear IS null OR YEAR(l.contractEndDate) = :endYear )")
