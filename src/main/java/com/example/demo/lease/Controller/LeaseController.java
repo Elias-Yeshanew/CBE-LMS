@@ -1,5 +1,6 @@
 package com.example.demo.lease.Controller;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.lease.GenerateReportsRequestBody;
 import com.example.demo.lease.Model.Lease;
-import com.example.demo.lease.Repository.LeaseRepository;
+// import com.example.demo.lease.Repository.LeaseRepository;
 import com.example.demo.lease.Service.BranchService;
 import com.example.demo.lease.Service.DistrictService;
 import com.example.demo.lease.Service.LeaseService;
@@ -18,12 +19,9 @@ import com.example.demo.lease.Service.LeaseService;
 import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URLConnection;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -50,7 +48,7 @@ public class LeaseController {
     private final DistrictService districtService;
 
     @Autowired
-    private LeaseRepository leaseRepository;
+    // private LeaseRepository leaseRepository;
 
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -237,6 +235,40 @@ public class LeaseController {
         }
     }
 
+    @PostMapping("/files")
+    public ResponseEntity<?> uploadImages(@RequestPart("file") MultipartFile imageFile) {
+        // Assuming you have a storage folder path defined in your properties
+        String storageFolderPath = uploadDir;
+
+        try {
+            // Get the original filename
+            String fileNameVariable = imageFile.getOriginalFilename();
+
+            // Check if the file is a PDF
+            if (!fileNameVariable.toLowerCase().endsWith(".pdf")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Collections.singletonMap("message", "Only PDF files are allowed"));
+            }
+
+            // Move the file to the storage folder
+            Path destinationPath = Paths.get(storageFolderPath, fileNameVariable);
+            Files.copy(imageFile.getInputStream(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
+
+            // Prepare the response
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "File uploaded");
+            response.put("fileName", fileNameVariable);
+            response.put("storageFolderPath", storageFolderPath);
+
+            return ResponseEntity.ok(response);
+
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception appropriately
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("message", "File upload failed"));
+        }
+    }
+
     private List<Map<String, Object>> mapLeasesToResponse(List<Lease> leases) {
         List<Map<String, Object>> leasesWithBranchName = new ArrayList<>();
         for (Lease lease : leases) {
@@ -312,8 +344,40 @@ public class LeaseController {
         }
     }
 
+    @GetMapping("/file/{filename:.+}")
+    public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
+        // Get the file path
+        Path filePath = getFilePath(filename);
+
+        // Check if the file exists
+        if (filePath == null || !filePath.toFile().exists()) {
+            // Handle the case when the file does not exist
+            return ResponseEntity.notFound().build();
+        }
+
+        try {
+            // Load file as Resource
+            Resource resource = new org.springframework.core.io.PathResource(filePath);
+
+            // Set Content-Disposition header to force download
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" +
+                    resource.getFilename());
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentLength(resource.contentLength())
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(resource);
+        } catch (IOException e) {
+            // Handle exceptions appropriately (e.g., log and return an error response)
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
     // @GetMapping("/file/{filename:.+}")
-    // public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
+    // public ResponseEntity<Resource> viewFile(@PathVariable String filename) {
     // // Get the file path
     // Path filePath = getFilePath(filename);
 
@@ -327,9 +391,9 @@ public class LeaseController {
     // // Load file as Resource
     // Resource resource = new org.springframework.core.io.PathResource(filePath);
 
-    // // Set Content-Disposition header to force download
+    // // Set Content-Disposition header to inline (display in browser)
     // HttpHeaders headers = new HttpHeaders();
-    // headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" +
+    // headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" +
     // resource.getFilename());
 
     // return ResponseEntity.ok()
@@ -343,7 +407,7 @@ public class LeaseController {
     // return ResponseEntity.status(500).body(null);
     // }
     // }
-    @GetMapping("/file/{filename:.+}")
+    @GetMapping("/filess/{filename:.+}")
     public ResponseEntity<Resource> viewFile(@PathVariable String filename) {
         // Get the file path
         Path filePath = getFilePath(filename);
@@ -358,31 +422,31 @@ public class LeaseController {
             // Load file as Resource
             Resource resource = new org.springframework.core.io.PathResource(filePath);
 
-        // Set Content-Disposition header to suggest inline display
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + resource.getFilename());
+            // Set Content-Disposition header to suggest inline display
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + resource.getFilename());
 
-        // Determine the Content-Type based on the file extension
-        String contentType = URLConnection.guessContentTypeFromName(filename);
+            // Determine the Content-Type based on the file extension
+            String contentType = URLConnection.guessContentTypeFromName(filename);
 
-        // If the Content-Type cannot be determined, set a default
-        if (contentType == null) {
-            contentType = "application/octet-stream";
+            // If the Content-Type cannot be determined, set a default
+            if (contentType == null) {
+                contentType = "application/octet-stream";
+            }
+
+            // Set Content-Type header
+            headers.setContentType(MediaType.parseMediaType(contentType));
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentLength(resource.contentLength())
+                    .body(resource);
+        } catch (IOException e) {
+            // Handle exceptions appropriately (e.g., log and return an error response)
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
         }
-
-        // Set Content-Type header
-        headers.setContentType(MediaType.parseMediaType(contentType));
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .contentLength(resource.contentLength())
-                .body(resource);
-    } catch (IOException e) {
-        // Handle exceptions appropriately (e.g., log and return an error response)
-        e.printStackTrace();
-        return ResponseEntity.status(500).body(null);
     }
-}
 
     private Path getFilePath(String filename) {
         // Implement this method based on your actual logic
@@ -392,4 +456,17 @@ public class LeaseController {
         String uploadDir = storageFolderPath;
         return Paths.get(uploadDir, filename);
     }
+
+    @PostMapping("/reports/byDistrict/{districtId}")
+    public String generateReportsForDistricts(
+            @PathVariable Long districtId,
+            @RequestBody GenerateReportsRequestBody requestBody,
+            @RequestParam(required = false, defaultValue = "-1") int selectedYear,
+            @RequestParam(required = false, defaultValue = "-1") int selectedMonth) {
+        return leaseService.generateReportsForDistrict(requestBody.getType(),
+                requestBody.getTerm(),
+                selectedYear, selectedMonth,
+                districtId).toString();
+    }
+
 }

@@ -44,9 +44,6 @@ public class LeaseService {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
-    // @Autowired
-    // private FileStorageService fileStorageService;
-
     public LeaseService(LeaseRepository leaseRepository, CalculateReport calculateReport) {
         this.leaseRepository = leaseRepository;
         this.calculateReport = calculateReport;
@@ -57,10 +54,6 @@ public class LeaseService {
     public List<Lease> getAllLeases() {
         return leaseRepository.findAll();
     }
-
-    // public List<Lease> getAllLeasesWithBranch() {
-    // return leaseRepository.findAllWithBranch();
-    // }
 
     public List<Lease> getLeasesByBranchId(Long branchId) {
         return leaseRepository.findByBranchId(branchId);
@@ -101,10 +94,6 @@ public class LeaseService {
                      // leaseRepository.findById(id).orElse(null);
     }
 
-    // public Lease getLeaseByContractNumber(String contractNumber) {
-    // return leaseRepository.findByContractNumber(contractNumber);
-    // }
-
     public List<Lease> getUnauthorizedLeases() {
         return leaseRepository.findAllByAuthorizationFalse();
     }
@@ -125,14 +114,9 @@ public class LeaseService {
     }
 
     public Map<String, Object> getAllActiveLeases(int page, int size) {
-        // LocalDate currentDate = LocalDate.now();
-        // List<Lease> leases =
-        // leaseRepository.findByContractEndDateAfterAndAuthorizationIsTrue(currentDate);
-        // LocalDate currentDate = LocalDate.now();
-        LocalDate currentDate = LocalDate.of(2020, 1, 1);
+        LocalDate currentDate = LocalDate.now();
         PageRequest pageable = PageRequest.of(page - 1, size);
         Page<Lease> leases = leaseRepository.findByContractEndDateAfterAndAuthorizationIsTrue(currentDate, pageable);
-        // LocalDate currentDate = LocalDate.of(2026, 1, 1);
         Map<String, Object> response = new HashMap<>();
 
         response.put("pagination", PaginationUtil.buildPagination(page, size, leases.getTotalElements()));
@@ -152,7 +136,7 @@ public class LeaseService {
     }
 
     public Lease addNewLease(Lease lease) throws Exception {
-        lease.setContractRegisteredDate(LocalDate.now());
+        // lease.setContractRegisteredDate(LocalDate.now());
         lease.setAuthorization(true);
         return leaseRepository.save(lease);
     }
@@ -225,8 +209,10 @@ public class LeaseService {
     }
 
     static double monthBetweenn(LocalDate startDate, LocalDate endDate) {
-        double averageDaysInMonth = 365.25 / 12; // Approximate average number of
-        return ChronoUnit.DAYS.between(startDate, endDate) / averageDaysInMonth;
+        double averageDaysInMonth = 365.000000000000001 / 12; // Approximate average number of
+
+        // return ChronoUnit.DAYS.between(startDate, endDate) + 1 / 365;
+        return (ChronoUnit.DAYS.between(startDate, endDate)) / averageDaysInMonth;
         // return ChronoUnit.MONTHS.between(startDate, endDate);
         // double averageDaysInMonth = 365.25 / 12; // Approximate average number of
         // days in a month
@@ -251,6 +237,7 @@ public class LeaseService {
         String installmentDetails = report.getInstallmentDetails();
         Double initialDirectCost = initialDirectCostB.doubleValue();
         LocalDate contractRegisteredDate = report.getContractRegisteredDate();
+        String branchName = report.getBranch().getBranchName();
 
         String contractType = report.getContractType();
         Double leaseLiablity = calculate.calculateLeaseLiability(totalPayment, advancePayment, discountRate, startDate,
@@ -274,11 +261,11 @@ public class LeaseService {
         } else if (type.equals("single") && term.equals("monthly")) {
             reportResult = CalculateReport.calculateReportM(id, startDate, endDate, rightOfUse, depreciationPerMonth,
                     term, totalPayment, advancePayment, discountRate, leaseLiablity, contractRegisteredDate,
-                    installmentDetails, branchId, contractType, endDate);
+                    installmentDetails, branchId, contractType, endDate, startDate, branchName);
         } else if (type.equals("single") && term.equals("yearly")) {
             reportResult = CalculateReport.calculateReportY(id, startDate, endDate, rightOfUse, depreciationPerMonth,
                     term, totalPayment, advancePayment, discountRate, leaseLiablity, contractRegisteredDate,
-                    installmentDetails, branchId, contractType, contractStarDate, endDate);
+                    installmentDetails, branchId, contractType, contractStarDate, endDate, branchName);
         }
 
         return new JSONObject(reportResult);
@@ -360,6 +347,7 @@ public class LeaseService {
             Lease lease = optionalLease.get();
             if (lease.getBranch() != null) {
                 return lease.getBranch().getBranchId();
+
             }
         }
 
@@ -477,5 +465,18 @@ public class LeaseService {
 
     public List<Lease> findLeasesByBranchId(Long branchId) {
         return leaseRepository.findLeasesByBranchId(branchId);
+    }
+
+    public JSONArray generateReportsForDistrict(String type, String term, int selectedYear, int selectedMonth,
+            Long districtId) {
+        List<Lease> leasesInDistrict = leaseRepository.findByDistrictIdQuery(districtId);
+        JSONArray reportsArray = new JSONArray();
+
+        for (Lease lease : leasesInDistrict) {
+            JSONObject reportObject = generateReportObject(type, term, selectedYear, selectedMonth, lease);
+            reportsArray.put(reportObject);
+        }
+
+        return reportsArray;
     }
 }
