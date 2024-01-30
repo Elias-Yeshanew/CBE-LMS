@@ -467,6 +467,23 @@ public class LeaseService {
         return leaseRepository.findLeasesByBranchId(branchId);
     }
 
+    public JSONArray generateReportsForDistrictForSelectedYear(String type, String term, int selectedYear,
+            int selectedMonth,
+            Long districtId) {
+        JSONArray reportsArray = new JSONArray();
+
+        List<Lease> leasesInDistrict = leaseRepository.findByBranchDistrictDistrictIdAndContractRegisteredDateYear(
+                districtId,
+                selectedYear);
+
+        for (Lease lease : leasesInDistrict) {
+            JSONObject reportObject = generateReportObject(type, term, selectedYear, selectedMonth, lease);
+            reportsArray.put(reportObject);
+        }
+
+        return reportsArray;
+    }
+
     public JSONArray generateReportsForDistrict(String type, String term, int selectedYear, int selectedMonth,
             Long districtId) {
         List<Lease> leasesInDistrict = leaseRepository.findByDistrictIdQuery(districtId);
@@ -479,4 +496,5 @@ public class LeaseService {
 
         return reportsArray;
     }
+
 }

@@ -1,6 +1,5 @@
 package com.example.demo.lease.Controller;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
@@ -9,17 +8,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import com.example.demo.lease.GenerateReportsRequestBody;
 import com.example.demo.lease.Model.Lease;
-// import com.example.demo.lease.Repository.LeaseRepository;
 import com.example.demo.lease.Service.BranchService;
 import com.example.demo.lease.Service.DistrictService;
 import com.example.demo.lease.Service.LeaseService;
 
 import jakarta.annotation.PostConstruct;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 
 import java.io.IOException;
 import java.net.URLConnection;
@@ -463,10 +460,19 @@ public class LeaseController {
             @RequestBody GenerateReportsRequestBody requestBody,
             @RequestParam(required = false, defaultValue = "-1") int selectedYear,
             @RequestParam(required = false, defaultValue = "-1") int selectedMonth) {
-        return leaseService.generateReportsForDistrict(requestBody.getType(),
-                requestBody.getTerm(),
-                selectedYear, selectedMonth,
-                districtId).toString();
+        String DistrictSummary = "";
+        if (selectedYear != -1) {
+            DistrictSummary = leaseService.generateReportsForDistrictForSelectedYear(requestBody.getType(),
+                    requestBody.getTerm(),
+                    selectedYear, selectedMonth,
+                    districtId).toString();
+        } else {
+            DistrictSummary = leaseService.generateReportsForDistrict(requestBody.getType(),
+                    requestBody.getTerm(),
+                    selectedYear, selectedMonth,
+                    districtId).toString();
+        }
+        return DistrictSummary;
     }
 
 }
