@@ -13,7 +13,7 @@ public interface BranchRepository extends JpaRepository<Branch, Long> {
 
     Branch findByPoliticalRegion(String politicalRegion);
 
-    Optional<Branch> findById(Branch branchId);
+    // Optional<Branch> findById(Branch branchId);
 
     long count();
 

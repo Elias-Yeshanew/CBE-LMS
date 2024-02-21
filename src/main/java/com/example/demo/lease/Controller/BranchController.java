@@ -58,28 +58,49 @@ public class BranchController {
         }
     }
 
+    // @PutMapping("/updateBranch/{branchId}")
+    // public ResponseEntity<Map<String, Object>> updateBranchById(@PathVariable
+    // Long branchId,
+    // @RequestBody Branch updatedBranch) {
+    // try {
+    // Branch updated = branchService.updateBranchById(branchId, updatedBranch);
+    // Map<String, Object> response = new HashMap<>();
+    // response.put("message", "Branch updated successfully");
+    // response.put("branch", updated);
+    // return ResponseEntity.ok(response);
+    // } catch (IllegalArgumentException e) {
+    // return ResponseEntity.notFound().build();
+    // } catch (Exception e) {
+    // // Handle exceptions and return an appropriate response
+    // Map<String, Object> errorResponse = new HashMap<>();
+    // errorResponse.put("timestamp", LocalDateTime.now());
+    // errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+    // errorResponse.put("error", "Internal Server Error");
+    // errorResponse.put("message", e.getMessage());
+    // errorResponse.put("path", "/branch/updateBranch/" + branchId);
+    // return
+    // ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    // }
+    // }
+
     @PutMapping("/updateBranch/{branchId}")
-    public ResponseEntity<Map<String, Object>> updateBranchById(@PathVariable Long branchId,
-            @RequestBody Branch updatedBranch) {
-        try {
-            Branch updated = branchService.updateBranchById(branchId, updatedBranch);
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Branch updated successfully");
-            response.put("branch", updated);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            // Handle exceptions and return an appropriate response
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("timestamp", LocalDateTime.now());
-            errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-            errorResponse.put("error", "Internal Server Error");
-            errorResponse.put("message", e.getMessage());
-            errorResponse.put("path", "/branch/updateBranch/" + branchId);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    public ResponseEntity<Branch> updateBranchById(@PathVariable Long branchId,
+            @RequestBody Branch updatedBranch) throws Exception {
+        updatedBranch.setId(branchId);
+        Branch updatedbranchs = branchService.updateBranchById(branchId, updatedBranch);
+        if (updatedbranchs != null) {
+            return new ResponseEntity<>(updatedbranchs, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+
+    // public String putMethodName(@PathVariable String id, @RequestBody String
+    // entity) {
+    // // TODO: process PUT request
+
+    // return entity;
+    // }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getBranchById(@PathVariable Long id) throws Exception {

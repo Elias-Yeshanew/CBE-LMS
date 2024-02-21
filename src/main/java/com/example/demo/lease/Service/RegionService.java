@@ -41,10 +41,16 @@ public class RegionService {
 
     public Map<String, Object> getRegionById(long regionId) {
         Optional<Region> optionalRegion = regionRepository.findById(regionId);
-        Map<String, Object> response = new HashMap<>();
-        response.put("region", optionalRegion
-                .map(this::mapRegion));
-        return response;
+
+        if (optionalRegion.isPresent()) {
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("region", optionalRegion
+                    .map(this::mapRegion));
+            return response;
+        } else {
+            return null;
+        }
     }
 
     private Map<String, Object> mapRegion(Region region) {
