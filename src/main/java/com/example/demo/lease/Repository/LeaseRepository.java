@@ -30,6 +30,8 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
 
         List<Lease> findAllByAuthorizationTrue();
 
+        List<Lease> findAllByAuthorizationTrueAndContractRegisteredDate(LocalDate date);
+
         Page<Lease> findByContractEndDateBeforeAndAuthorizationIsTrue(LocalDate date, PageRequest pageable);
 
         Page<Lease> findByContractEndDateAfterAndAuthorizationIsTrue(LocalDate date, PageRequest pageable);

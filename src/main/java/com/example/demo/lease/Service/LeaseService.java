@@ -1,5 +1,10 @@
 package com.example.demo.lease.Service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
@@ -318,16 +323,37 @@ public class LeaseService {
         return leaseRepository.save(lease);
     }
 
-    public List<JSONObject> generateReportsForAll(String type, String term, int selectedYear, int selectedMonth) {
-        List<Lease> allLeases = leaseRepository.findAllByAuthorizationTrue(); // Fetch all leases
-        List<JSONObject> reports = new ArrayList<>();
+    // public List<JSONObject> generateReportsForAll(String type, String term, int
+    // selectedYear, int selectedMonth) {
+    // List<Lease> allLeases = leaseRepository.findAllByAuthorizationTrue(); //
+    // Fetch all leases
+    // List<JSONObject> reports = new ArrayList<>();
 
+    // for (Lease lease : allLeases) {
+    // JSONObject reportObject = generateReportObject(type, term, selectedYear,
+    // selectedMonth, lease);
+    // reports.add(reportObject);
+    // }
+
+    // return reports;
+    // }
+
+    public List<JSONObject> generateReportsForAll(String type, String term, int selectedYear, int selectedMonth,
+            LocalDate date) {
+        List<JSONObject> reports = new ArrayList<>();
+        List<Lease> allLeases;
+
+        if (date == null) {
+            allLeases = leaseRepository.findAllByAuthorizationTrue();
+        } else {
+            allLeases = leaseRepository.findAllByAuthorizationTrueAndContractRegisteredDate(date);
+        }
         for (Lease lease : allLeases) {
             JSONObject reportObject = generateReportObject(type, term, selectedYear, selectedMonth, lease);
             reports.add(reportObject);
         }
-
         return reports;
+
     }
 
     public String uploadFile(Long leaseId, MultipartFile file) throws IOException {
@@ -361,7 +387,52 @@ public class LeaseService {
 
         Map<String, Object> response = new HashMap<>();
 
-        response.put("pagination", PaginationUtil.buildPagination(page, size, leasePage.getTotalElements()));
+        response.put("pagination", PaginationUtil.buildPagination(page, size,
+                leasePage.getTotalElements()));
+
+        response.put("leases",
+                leasePage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
+
+        return response;
+    }
+
+    public Map<String, Object> getAllLeasesSorted(int page, int size, String sortBy,
+            String sortOrder) {
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
+        }
+
+        PageRequest pageable = PageRequest
+                .of(page - 1, size, Sort.by(direction, sortBy));
+
+        Page<Lease> leasePage = leaseRepository.findAll(pageable);
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("pagination", PaginationUtil.buildPagination(page, size,
+                leasePage.getTotalElements()));
+
+        response.put("leases",
+                leasePage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
+
+        return response;
+    }
+
+    public Map<String, Object> getAllLeasesSortedByBranchName(int page, int size, String sortOrder) {
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
+        }
+
+        PageRequest pageable = PageRequest
+                .of(page - 1, size, Sort.by(direction, "branch.branchName"));
+        Page<Lease> leasePage = leaseRepository.findAll(pageable);
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("pagination", PaginationUtil.buildPagination(page, size,
+                leasePage.getTotalElements()));
 
         response.put("leases",
                 leasePage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));

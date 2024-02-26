@@ -3,6 +3,7 @@ package com.example.demo.lease.Controller;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import jakarta.annotation.PostConstruct;
 
 import java.io.IOException;
 import java.net.URLConnection;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -68,22 +70,37 @@ public class LeaseController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam int size,
             @RequestParam(required = false) Integer startYear,
-            @RequestParam(required = false) Integer endYear) {
+            @RequestParam(required = false) Integer endYear,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false, defaultValue = "asc") String sortOrder,
+            @RequestParam(required = false) String sortByBranch,
+            @RequestParam(required = false, defaultValue = "asc") String sortOrderBranch) {
         try {
             Map<String, Object> response;
-
-            if (startYear != null && endYear != null) {
-                // Filter between two dates
-                response = leaseService.getLeasesByContractYearRange(startYear, endYear, page, size);
-            } else if (startYear != null && endYear == null) {
-                // Filter with only start date
-                response = leaseService.getLeasesByContractYear(startYear, DEFAULT_END_YEAR, page, size);
-            } else if (startYear == null && endYear != null) {
-                // Filter with only end date
-                response = leaseService.getLeasesByContractYear(DEFAULT_START_YEAR, endYear, page, size);
+            if (sortByBranch != null && sortByBranch.equals("branchName")) {
+                // filter with branch name
+                response = leaseService.getAllLeasesSortedByBranchName(page, size, sortOrderBranch);
+            } else if (sortBy != null && sortOrder != null) {
+                // filter with other lease properties like contract start date or contract
+                // registeration date etc
+                response = leaseService.getAllLeasesSorted(page, size, sortBy, sortOrder);
             } else {
-                // No date filter, get all leases
-                response = leaseService.getAllLeases(page, size);
+                if (startYear != null && endYear != null) {
+                    // Filter between two dates
+                    response = leaseService.getLeasesByContractYearRange(startYear, endYear,
+                            page, size);
+                } else if (startYear != null && endYear == null) {
+                    // Filter with only start date
+                    response = leaseService.getLeasesByContractYear(startYear, DEFAULT_END_YEAR,
+                            page, size);
+                } else if (startYear == null && endYear != null) {
+                    // Filter with only end date
+                    response = leaseService.getLeasesByContractYear(DEFAULT_START_YEAR, endYear,
+                            page, size);
+                } else {
+                    // No date filter, get all leases
+                    response = leaseService.getAllLeases(page, size);
+                }
             }
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
@@ -97,6 +114,58 @@ public class LeaseController {
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // @GetMapping
+    // public ResponseEntity<Map<String, Object>> getAllLeasess(
+    // @RequestParam(defaultValue = "1") int page,
+    // @RequestParam int size,
+    // @RequestParam(required = false) String sortBy,
+    // @RequestParam(required = false, defaultValue = "asc") String sortOrder) {
+    // try {
+    // Page<Lease> leases = leaseService.getAllLeasesSorted(page, size, sortBy,
+    // sortOrder);
+    // Map<String, Object> response = new HashMap<>();
+    // response.put("leases", leases.getContent());
+    // response.put("currentPage", leases.getNumber() + 1);
+    // response.put("totalItems", leases.getTotalElements());
+    // response.put("totalPages", leases.getTotalPages());
+    // return new ResponseEntity<>(response, HttpStatus.OK);
+    // } catch (Exception e) {
+    // Map<String, Object> errorResponse = new HashMap<>();
+    // errorResponse.put("timestamp", LocalDateTime.now());
+    // errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+    // errorResponse.put("error", "Internal Server Error");
+    // errorResponse.put("message", e.getMessage());
+    // errorResponse.put("path", "/leases");
+    // return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    // }
+    // }
+
+    // @GetMapping("/bybranch")
+    // public ResponseEntity<Map<String, Object>> getAllLeases(
+    // @RequestParam(defaultValue = "1") int page,
+    // @RequestParam int size,
+    // @RequestParam(required = false) String sortBy,
+    // @RequestParam(required = false, defaultValue = "asc") String sortOrder) {
+    // try {
+    // Page<Lease> leases = leaseService.getAllLeasesSortedByBranchName(page, size,
+    // "asc");
+    // Map<String, Object> response = new HashMap<>();
+    // response.put("leases", leases.getContent());
+    // response.put("currentPage", leases.getNumber() + 1);
+    // response.put("totalItems", leases.getTotalElements());
+    // response.put("totalPages", leases.getTotalPages());
+    // return new ResponseEntity<>(response, HttpStatus.OK);
+    // } catch (Exception e) {
+    // Map<String, Object> errorResponse = new HashMap<>();
+    // errorResponse.put("timestamp", LocalDateTime.now());
+    // errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+    // errorResponse.put("error", "Internal Server Error");
+    // errorResponse.put("message", e.getMessage());
+    // errorResponse.put("path", "/leases");
+    // return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    // }
+    // }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getLeaseWithBranchById(@PathVariable Long id) {
@@ -184,9 +253,10 @@ public class LeaseController {
     public String generateReportsForAllLeases(
             @RequestBody GenerateReportsRequestBody requestBody,
             @RequestParam(required = false, defaultValue = "-1") int selectedYear,
-            @RequestParam(required = false, defaultValue = "-1") int selectedMonth) {
+            @RequestParam(required = false, defaultValue = "-1") int selectedMonth,
+            @RequestParam(required = false) LocalDate date) {
         return leaseService
-                .generateReportsForAll(requestBody.getType(), requestBody.getTerm(), selectedYear, selectedMonth)
+                .generateReportsForAll(requestBody.getType(), requestBody.getTerm(), selectedYear, selectedMonth, date)
                 .toString();
     }
 
