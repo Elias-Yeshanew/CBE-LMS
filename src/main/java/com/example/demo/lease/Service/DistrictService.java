@@ -96,10 +96,10 @@ public class DistrictService {
 
     public Map<String, Object> getDistrictById(Long districtId) throws Exception {
         Optional<District> optionalDistrict = districtRepository.findById(districtId);
+        Map<String, Object> response = new HashMap<>();
 
         if (optionalDistrict.isPresent()) {
 
-            Map<String, Object> response = new HashMap<>();
             response.put("district",
                     optionalDistrict.map(this::mapDistrict));
             return response;
