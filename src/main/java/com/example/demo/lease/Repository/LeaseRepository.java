@@ -69,4 +69,44 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
         // districtId,
         // @Param("registeredDate") LocalDate registeredDate);
 
+        @Query("SELECT l FROM Lease l " +
+                        "WHERE ((:startYear IS null OR YEAR(l.contractRegisteredDate) = :startYear) " +
+                        "AND (:endYear IS null OR YEAR(l.contractEndDate) = :endYear)) " +
+                        "AND (:endDateBefore IS not null AND l.contractEndDate < :endDateBefore AND l.authorization = true)")
+        Page<Lease> findByContractStartDateYearAndContractEndDateYearAndBeforeEndDate(
+                        Integer startYear,
+                        Integer endYear,
+                        LocalDate endDateBefore,
+                        PageRequest pageable);
+
+        @Query("SELECT l FROM Lease l " +
+                        "WHERE (:startYear IS null OR YEAR(l.contractRegisteredDate) = :startYear) " +
+                        "OR (:endYear IS null OR YEAR(l.contractEndDate) = :endYear) " +
+                        "AND (:endDateBefore IS not null AND l.contractEndDate < :endDateBefore AND l.authorization = true)")
+        Page<Lease> findByContractStartDateYearORContractEndDateYearAndBeforeEndDate(
+                        int startYear,
+                        int endYear,
+                        LocalDate endDateBefore,
+                        PageRequest pageable);
+
+        @Query("SELECT l FROM Lease l " +
+                        "WHERE ((:startYear IS null OR YEAR(l.contractRegisteredDate) = :startYear) " +
+                        "AND (:endYear IS null OR YEAR(l.contractEndDate) = :endYear)) " +
+                        "AND (:endDateBefore IS not null AND l.contractEndDate > :endDateBefore AND l.authorization = true)")
+        Page<Lease> findByContractStartDateYearAndContractEndDateYearAndContractEndDateAfter(
+                        Integer startYear,
+                        Integer endYear,
+                        LocalDate endDateBefore,
+                        PageRequest pageable);
+
+        @Query("SELECT l FROM Lease l " +
+                        "WHERE (:startYear IS null OR YEAR(l.contractRegisteredDate) = :startYear) " +
+                        "OR (:endYear IS null OR YEAR(l.contractEndDate) = :endYear) " +
+                        "AND (:endDateBefore IS not null AND l.contractEndDate > :endDateBefore AND l.authorization = true)")
+        Page<Lease> findByContractStartDateYearORContractEndDateYearAndContractEndDateAfter(
+                        int startYear,
+                        int endYear,
+                        LocalDate endDateBefore,
+                        PageRequest pageable);
+
 }

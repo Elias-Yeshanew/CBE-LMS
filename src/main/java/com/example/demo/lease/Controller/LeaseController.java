@@ -72,36 +72,38 @@ public class LeaseController {
             @RequestParam(required = false) Integer startYear,
             @RequestParam(required = false) Integer endYear,
             @RequestParam(required = false) String sortBy,
-            @RequestParam(required = false, defaultValue = "asc") String sortOrder,
-            @RequestParam(required = false) String sortByBranch,
-            @RequestParam(required = false, defaultValue = "asc") String sortOrderBranch) {
+            @RequestParam(required = false) String sortOrder,
+            @RequestParam(required = false) String sortByBranch) {
         try {
-            Map<String, Object> response;
-            if (sortByBranch != null && sortByBranch.equals("branchName")) {
-                // filter with branch name
-                response = leaseService.getAllLeasesSortedByBranchName(page, size, sortOrderBranch);
+            Map<String, Object> response = new HashMap<>();
+
+            if (startYear != null && endYear != null) {
+                // Filter between two dates
+                response = leaseService.getLeasesByContractYearRange(startYear, endYear,
+                        page, size, sortBy, sortOrder);
+            } else if (startYear != null && endYear == null) {
+                // Filter with only start date
+                response = leaseService.getLeasesByContractYear(startYear, DEFAULT_END_YEAR,
+                        page, size, sortBy, sortOrder);
+            } else if (startYear == null && endYear != null) {
+                // Filter with only end date
+                response = leaseService.getLeasesByContractYear(DEFAULT_START_YEAR, endYear,
+                        page, size, sortBy, sortOrder);
             } else if (sortBy != null && sortOrder != null) {
+                if (sortBy.equals("branchName")) {
+                    response = leaseService.getAllLeasesSortedByBranchName(page, size, sortOrder);
+
+                } else {
+                    response = leaseService.getAllLeasesSorted(page, size, sortBy, sortOrder);
+
+                }
                 // filter with other lease properties like contract start date or contract
                 // registeration date etc
-                response = leaseService.getAllLeasesSorted(page, size, sortBy, sortOrder);
             } else {
-                if (startYear != null && endYear != null) {
-                    // Filter between two dates
-                    response = leaseService.getLeasesByContractYearRange(startYear, endYear,
-                            page, size);
-                } else if (startYear != null && endYear == null) {
-                    // Filter with only start date
-                    response = leaseService.getLeasesByContractYear(startYear, DEFAULT_END_YEAR,
-                            page, size);
-                } else if (startYear == null && endYear != null) {
-                    // Filter with only end date
-                    response = leaseService.getLeasesByContractYear(DEFAULT_START_YEAR, endYear,
-                            page, size);
-                } else {
-                    // No date filter, get all leases
-                    response = leaseService.getAllLeases(page, size);
-                }
+                // No date filter, get all leases
+                response = leaseService.getAllLeases(page, size);
             }
+
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             // Handle exceptions and return an appropriate response
@@ -194,17 +196,104 @@ public class LeaseController {
     }
 
     @GetMapping("/expiredLeases")
-    public Map<String, Object> getExpiredLeases(
+    public ResponseEntity<Map<String, Object>> getExpiredLeases(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam int size) {
-        return leaseService.getAllExpiredLeases(page, size);
+            @RequestParam int size,
+            @RequestParam(required = false) Integer startYear,
+            @RequestParam(required = false) Integer endYear,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortOrder) {
+        try {
+            Map<String, Object> response = new HashMap<>();
+            if (sortBy == null || sortOrder == null) {
+                if (startYear != null && endYear != null) {
+                    // Filter between two dates
+                    response = leaseService.getExpiredLeasesByContractYearRange(startYear, endYear, page, size);
+                } else if (startYear != null && endYear == null) {
+                    // Filter with only start date
+                    response = leaseService.getExpiredLeasesByContractYear(startYear, DEFAULT_END_YEAR,
+                            page, size);
+                } else if (startYear == null && endYear != null) {
+                    // Filter with only end date
+                    response = leaseService.getExpiredLeasesByContractYear(DEFAULT_START_YEAR, endYear,
+                            page, size);
+                } else {
+                    // No date filter, get all expired leases
+                    response = leaseService.getAllExpiredLeases(page, size);
+                }
+            } else if (sortBy != null && sortOrder != null) {
+                if (sortOrder != null && sortBy.equals("branchName")) {
+                    response = leaseService.getAllExpiredLeasesSortedByBranchName(page, size,
+                            sortOrder);
+                } else {
+                    response = leaseService.getAllExpiredLeasesSorted(page, size, sortBy, sortOrder);
+                }
+                // filter with other lease properties like contract start date or contract
+                // registeration date etc
+            }
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            // Handle exceptions and return an appropriate response
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("timestamp", LocalDateTime.now());
+            errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            errorResponse.put("error", "Internal Server Error");
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("path", "/leases");
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        // return leaseService.getAllExpiredLeases(page, size);
     }
 
     @GetMapping("/activeContracts")
-    public Map<String, Object> getAllActiveLeases(
+    public ResponseEntity<Map<String, Object>> getAllActiveLeases(
+
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam int size) {
-        return leaseService.getAllActiveLeases(page, size);
+            @RequestParam int size,
+            @RequestParam(required = false) Integer startYear,
+            @RequestParam(required = false) Integer endYear,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortOrder) {
+        try {
+            Map<String, Object> response = new HashMap<>();
+            // filter with other lease properties like contract start date or contract
+            // registeration date etc
+            if (startYear != null && endYear != null) {
+                // Filter between two dates
+                response = leaseService.getActiveLeasesByContractYearRange(startYear, endYear, page, size, sortBy,
+                        sortOrder);
+            } else if (startYear != null && endYear == null) {
+                // Filter with only start date
+                response = leaseService.getActiveLeasesByContractYear(startYear, DEFAULT_END_YEAR,
+                        page, size, sortBy, sortOrder);
+            } else if (startYear == null && endYear != null) {
+                // Filter with only end date
+                response = leaseService.getActiveLeasesByContractYear(DEFAULT_START_YEAR, endYear,
+                        page, size, sortBy, sortOrder);
+            } else if (sortBy != null && sortOrder != null) {
+                if (sortOrder != null && sortBy.equals("branchName")) {
+                    response = leaseService.getAllActiveLeasesSortedByBranchName(page, size,
+                            sortOrder);
+                } else {
+                    response = leaseService.getAllActiveLeasesSorted(page, size, sortBy, sortOrder);
+                }
+
+            } else {
+                // No date filter, get all expired leases
+                response = leaseService.getAllActiveLeases(page, size);
+            }
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            // Handle exceptions and return an appropriate response
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("timestamp", LocalDateTime.now());
+            errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            errorResponse.put("error", "Internal Server Error");
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("path", "/leases");
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        // return leaseService.getAllActiveLeases(page, size);
     }
 
     @PutMapping("/{id}/authorize")
@@ -365,28 +454,26 @@ public class LeaseController {
     @GetMapping("/byBranchId/{branchId}")
     public ResponseEntity<Object> getLeasesByBranchId(@PathVariable Long branchId,
             @RequestParam(required = false, defaultValue = "0") int startYear) {
+        Map<String, Object> response = new HashMap<>();
+
         if (startYear != 0) {
             List<Lease> leases = leaseService.getLeasesByBranchIdAndContractRegistrationYear(branchId, startYear);
             if (leases.isEmpty()) {
-                Map<String, String> response = new HashMap<>();
                 response.put("message", "No leases found for branch ID: " + branchId + " in the year " + startYear);
                 return new ResponseEntity<Object>(response, HttpStatus.NOT_FOUND);
             } else {
-                Map<String, Object> response = new HashMap<>();
                 response.put("leases", mapLeasesToResponse(leases));
                 // response.put("leases", leases); // Assuming leases is a list of Lease objects
-                return ResponseEntity.ok(response);
             }
         } else {
 
             List<Lease> leases = leaseService.findLeasesByBranchId(branchId);
-
-            Map<String, Object> response = new HashMap<>();
             response.put("leases", mapLeasesToResponse(leases));
             // response.put("leases", leases); // Assuming leases is a list of Lease objects
-            return ResponseEntity.ok(response);
 
         }
+        return ResponseEntity.ok(response);
+
     }
 
     @GetMapping("/byDistrictId/{districtId}")

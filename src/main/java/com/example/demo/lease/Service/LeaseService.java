@@ -49,6 +49,8 @@ public class LeaseService {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
+    private final LocalDate currentDate = LocalDate.now();
+
     public LeaseService(LeaseRepository leaseRepository, CalculateReport calculateReport) {
         this.leaseRepository = leaseRepository;
         this.calculateReport = calculateReport;
@@ -104,7 +106,6 @@ public class LeaseService {
     }
 
     public Map<String, Object> getAllExpiredLeases(int page, int size) {
-        LocalDate currentDate = LocalDate.now();
         PageRequest pageable = PageRequest.of(page - 1, size);
         Page<Lease> leases = leaseRepository.findByContractEndDateBeforeAndAuthorizationIsTrue(currentDate, pageable);
         // LocalDate currentDate = LocalDate.of(2026, 1, 1);
@@ -119,7 +120,6 @@ public class LeaseService {
     }
 
     public Map<String, Object> getAllActiveLeases(int page, int size) {
-        LocalDate currentDate = LocalDate.now();
         PageRequest pageable = PageRequest.of(page - 1, size);
         Page<Lease> leases = leaseRepository.findByContractEndDateAfterAndAuthorizationIsTrue(currentDate, pageable);
         Map<String, Object> response = new HashMap<>();
@@ -419,6 +419,56 @@ public class LeaseService {
         return response;
     }
 
+    public Map<String, Object> getAllExpiredLeasesSorted(int page, int size, String sortBy,
+            String sortOrder) {
+        Sort.Direction direction = Sort.Direction.ASC;
+
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
+        }
+
+        PageRequest pageable = PageRequest
+                .of(page - 1, size, Sort.by(direction, sortBy));
+
+        Page<Lease> leasePage = leaseRepository.findByContractEndDateBeforeAndAuthorizationIsTrue(currentDate,
+                pageable);
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("pagination", PaginationUtil.buildPagination(page, size,
+                leasePage.getTotalElements()));
+
+        response.put("leases",
+                leasePage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
+
+        return response;
+    }
+
+    public Map<String, Object> getAllActiveLeasesSorted(int page, int size, String sortBy,
+            String sortOrder) {
+        Sort.Direction direction = Sort.Direction.ASC;
+
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
+        }
+
+        PageRequest pageable = PageRequest
+                .of(page - 1, size, Sort.by(direction, sortBy));
+
+        Page<Lease> leasePage = leaseRepository.findByContractEndDateAfterAndAuthorizationIsTrue(currentDate,
+                pageable);
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("pagination", PaginationUtil.buildPagination(page, size,
+                leasePage.getTotalElements()));
+
+        response.put("leases",
+                leasePage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
+
+        return response;
+    }
+
     public Map<String, Object> getAllLeasesSortedByBranchName(int page, int size, String sortOrder) {
         Sort.Direction direction = Sort.Direction.ASC;
         if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
@@ -428,6 +478,50 @@ public class LeaseService {
         PageRequest pageable = PageRequest
                 .of(page - 1, size, Sort.by(direction, "branch.branchName"));
         Page<Lease> leasePage = leaseRepository.findAll(pageable);
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("pagination", PaginationUtil.buildPagination(page, size,
+                leasePage.getTotalElements()));
+
+        response.put("leases",
+                leasePage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
+
+        return response;
+    }
+
+    public Map<String, Object> getAllExpiredLeasesSortedByBranchName(int page, int size, String sortOrder) {
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
+        }
+
+        PageRequest pageable = PageRequest
+                .of(page - 1, size, Sort.by(direction, "branch.branchName"));
+        Page<Lease> leasePage = leaseRepository.findByContractEndDateBeforeAndAuthorizationIsTrue(currentDate,
+                pageable);
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("pagination", PaginationUtil.buildPagination(page, size,
+                leasePage.getTotalElements()));
+
+        response.put("leases",
+                leasePage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
+
+        return response;
+    }
+
+    public Map<String, Object> getAllActiveLeasesSortedByBranchName(int page, int size, String sortOrder) {
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
+        }
+
+        PageRequest pageable = PageRequest
+                .of(page - 1, size, Sort.by(direction, "branch.branchName"));
+        Page<Lease> leasePage = leaseRepository.findByContractEndDateAfterAndAuthorizationIsTrue(currentDate,
+                pageable);
 
         Map<String, Object> response = new HashMap<>();
 
@@ -490,8 +584,25 @@ public class LeaseService {
                 contractStartDate, contractEndDate, installmentDetails, contractRegisteredDate);
     }
 
-    public Map<String, Object> getLeasesByContractYear(int startYear, int endYear, int page, int size) {
-        PageRequest pageable = PageRequest.of(page - 1, size); // Adjust the page number
+    public Map<String, Object> getLeasesByContractYear(int startYear, int endYear, int page, int size, String sortBy,
+            String sortOrder) {
+        Sort.Direction direction = Sort.Direction.ASC;
+        PageRequest pageable;
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
+        }
+        if (sortBy != null || sortOrder != null) {
+            if (sortBy.equals("branchName")) {
+                pageable = PageRequest
+                        .of(page - 1, size, Sort.by(direction, "branch.branchName"));
+            } else {
+                pageable = PageRequest
+                        .of(page - 1, size, Sort.by(direction, sortBy));
+            }
+        } else {
+            pageable = PageRequest
+                    .of(page - 1, size);
+        }
         Page<Lease> leasePage = leaseRepository.findByContractStartDateYearORContractEndDateYear(startYear, endYear,
                 pageable);
 
@@ -505,10 +616,122 @@ public class LeaseService {
         return response;
     }
 
-    public Map<String, Object> getLeasesByContractYearRange(int startYear, int endYear, int page, int size) {
+    public Map<String, Object> getExpiredLeasesByContractYear(int startYear, int endYear, int page, int size) {
         PageRequest pageable = PageRequest.of(page - 1, size); // Adjust the page number
+        Page<Lease> leasePage = leaseRepository.findByContractStartDateYearORContractEndDateYearAndBeforeEndDate(
+                startYear, endYear, currentDate,
+                pageable);
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("pagination", PaginationUtil.buildPagination(page, size, leasePage.getTotalElements()));
+
+        response.put("leases",
+                leasePage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
+
+        return response;
+    }
+
+    public Map<String, Object> getActiveLeasesByContractYear(int startYear, int endYear, int page, int size,
+            String sortBy, String sortOrder) {
+        Sort.Direction direction = Sort.Direction.ASC;
+        PageRequest pageable;
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
+        }
+        if (sortBy != null || sortOrder != null) {
+            pageable = PageRequest
+                    .of(page - 1, size, Sort.by(direction, sortBy));
+        } else {
+            pageable = PageRequest
+                    .of(page - 1, size);
+        }
+
+        Page<Lease> leasePage = leaseRepository.findByContractStartDateYearORContractEndDateYearAndContractEndDateAfter(
+                startYear, endYear, currentDate,
+                pageable);
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("pagination", PaginationUtil.buildPagination(page, size, leasePage.getTotalElements()));
+
+        response.put("leases",
+                leasePage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
+
+        return response;
+    }
+
+    public Map<String, Object> getLeasesByContractYearRange(int startYear, int endYear, int page, int size,
+            String sortBy, String sortOrder) {
+        Sort.Direction direction = Sort.Direction.ASC;
+        PageRequest pageable;
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
+        }
+        if (sortBy != null || sortOrder != null) {
+            if (sortBy.equals("branchName")) {
+                pageable = PageRequest
+                        .of(page - 1, size, Sort.by(direction, "branch.branchName"));
+            } else {
+                pageable = PageRequest
+                        .of(page - 1, size, Sort.by(direction, sortBy));
+            }
+        } else {
+            pageable = PageRequest
+                    .of(page - 1, size);
+        }
         Page<Lease> leasePage = leaseRepository.findByContractStartDateYearAndContractEndDateYear(startYear, endYear,
                 pageable);
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("pagination", PaginationUtil.buildPagination(page, size, leasePage.getTotalElements()));
+
+        response.put("leases",
+                leasePage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
+
+        return response;
+    }
+
+    public Map<String, Object> getExpiredLeasesByContractYearRange(int startYear, int endYear, int page, int size) {
+        PageRequest pageable = PageRequest.of(page - 1, size); // Adjust the page number
+        Page<Lease> leasePage = leaseRepository.findByContractStartDateYearAndContractEndDateYearAndBeforeEndDate(
+                startYear, endYear, currentDate, pageable);
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("pagination", PaginationUtil.buildPagination(page, size, leasePage.getTotalElements()));
+
+        response.put("leases",
+                leasePage.getContent().stream().map(this::mapLeaseWithBranchId).collect(Collectors.toList()));
+
+        return response;
+    }
+
+    public Map<String, Object> getActiveLeasesByContractYearRange(int startYear, int endYear, int page, int size,
+            String sortBy, String sortOrder) {
+
+        Sort.Direction direction = Sort.Direction.ASC;
+        PageRequest pageable;
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
+        }
+        if (sortBy != null || sortOrder != null) {
+            if (sortBy.equals("branchName")) {
+                pageable = PageRequest
+                        .of(page - 1, size, Sort.by(direction, "branch.branchName"));
+            } else {
+                pageable = PageRequest
+                        .of(page - 1, size, Sort.by(direction, sortBy));
+            }
+
+        } else {
+            pageable = PageRequest
+                    .of(page - 1, size);
+        }
+        Page<Lease> leasePage = leaseRepository
+                .findByContractStartDateYearAndContractEndDateYearAndContractEndDateAfter(
+                        startYear, endYear, currentDate, pageable);
 
         Map<String, Object> response = new HashMap<>();
 
