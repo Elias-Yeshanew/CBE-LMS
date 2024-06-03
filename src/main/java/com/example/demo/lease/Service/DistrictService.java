@@ -16,6 +16,7 @@ import com.example.demo.lease.Repository.BranchRepository;
 import com.example.demo.lease.Repository.DistrictRepository;
 import com.example.demo.lease.Repository.RegionRepository;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -110,6 +111,9 @@ public class DistrictService {
     }
 
     public void deleteDistrictById(Long districtId) {
+        if (!branchRepository.existsById(districtId)) {
+            throw new EntityNotFoundException("District with id " + districtId + " does not exist.");
+        }
         districtRepository.deleteById(districtId);
     }
 }

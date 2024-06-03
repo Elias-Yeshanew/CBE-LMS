@@ -616,8 +616,25 @@ public class LeaseService {
         return response;
     }
 
-    public Map<String, Object> getExpiredLeasesByContractYear(int startYear, int endYear, int page, int size) {
-        PageRequest pageable = PageRequest.of(page - 1, size); // Adjust the page number
+    public Map<String, Object> getExpiredLeasesByContractYear(int startYear, int endYear, int page, int size,
+            String sortBy, String sortOrder) {
+        Sort.Direction direction = Sort.Direction.ASC;
+        PageRequest pageable;
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
+        }
+        if (sortBy != null || sortOrder != null) {
+            if (sortBy.equals("branchName")) {
+                pageable = PageRequest
+                        .of(page - 1, size, Sort.by(direction, "branch.branchName"));
+            } else {
+                pageable = PageRequest
+                        .of(page - 1, size, Sort.by(direction, sortBy));
+            }
+        } else {
+            pageable = PageRequest
+                    .of(page - 1, size);
+        }
         Page<Lease> leasePage = leaseRepository.findByContractStartDateYearORContractEndDateYearAndBeforeEndDate(
                 startYear, endYear, currentDate,
                 pageable);
@@ -640,8 +657,14 @@ public class LeaseService {
             direction = Sort.Direction.DESC;
         }
         if (sortBy != null || sortOrder != null) {
-            pageable = PageRequest
-                    .of(page - 1, size, Sort.by(direction, sortBy));
+            if (sortBy.equals("branchName")) {
+                pageable = PageRequest
+                        .of(page - 1, size, Sort.by(direction, "branch.branchName"));
+            } else {
+                pageable = PageRequest
+                        .of(page - 1, size, Sort.by(direction, sortBy));
+            }
+
         } else {
             pageable = PageRequest
                     .of(page - 1, size);
@@ -693,8 +716,25 @@ public class LeaseService {
         return response;
     }
 
-    public Map<String, Object> getExpiredLeasesByContractYearRange(int startYear, int endYear, int page, int size) {
-        PageRequest pageable = PageRequest.of(page - 1, size); // Adjust the page number
+    public Map<String, Object> getExpiredLeasesByContractYearRange(int startYear, int endYear, int page, int size,
+            String sortBy, String sortOrder) {
+        Sort.Direction direction = Sort.Direction.ASC;
+        PageRequest pageable;
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
+        }
+        if (sortBy != null || sortOrder != null) {
+            if (sortBy.equals("branchName")) {
+                pageable = PageRequest
+                        .of(page - 1, size, Sort.by(direction, "branch.branchName"));
+            } else {
+                pageable = PageRequest
+                        .of(page - 1, size, Sort.by(direction, sortBy));
+            }
+        } else {
+            pageable = PageRequest
+                    .of(page - 1, size);
+        }
         Page<Lease> leasePage = leaseRepository.findByContractStartDateYearAndContractEndDateYearAndBeforeEndDate(
                 startYear, endYear, currentDate, pageable);
 

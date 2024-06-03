@@ -328,8 +328,6 @@ public class CalculateReport {
                         } else {
                             interestExpensepermonth = interestExpense
                                     / numberOfmonths;
-                            System.out.println(depreciationF);
-                            System.out.println(numberOfmonths);
 
                             // if (result % 1 == 0) {
                             // expenceMonths = (int) result;
@@ -789,6 +787,7 @@ public class CalculateReport {
 
             }
         }
+        yearbetween = yearbetween + 1;
         for (int i = 0; i < yearbetween; i++) {
             if (i == 0) {
                 balance = rightOfUse;
@@ -841,19 +840,24 @@ public class CalculateReport {
                 reportArray.put(finalYear);
                 break;
             } else {
-                balance -= constDepreciationPerY;
-                JSONObject reportEntry = new JSONObject();
-                reportEntry.put("year", getNextTerm(startDate, "yearly").toString());
-                reportEntry.put("balance", balance);
-                // if (i == (amountOfDepreciation - 2)) {
-                // depreciationBeforeLast = Math.round(balance);
-                // }
-                reportEntry.put("deprecationExp", constDepreciationPerY);
-                reportEntry.put("months", "12");
-                reportArray.put(reportEntry);
-                summaryArray.put(reportEntry);
-                startDate = getNextTerm(startDate, "yearly");
-                numberofmonths += 12;
+                if (numberofmonths + 12 > totalnumberofmonths) {
+                    continue;
+                } else {
+                    balance -= constDepreciationPerY;
+                    JSONObject reportEntry = new JSONObject();
+                    reportEntry.put("year", getNextTerm(startDate, "yearly").toString());
+                    reportEntry.put("balance", balance);
+                    // if (i == (amountOfDepreciation - 2)) {
+                    // depreciationBeforeLast = Math.round(balance);
+                    // }
+                    reportEntry.put("deprecationExp", constDepreciationPerY);
+                    reportEntry.put("months", "12");
+                    reportArray.put(reportEntry);
+                    summaryArray.put(reportEntry);
+                    startDate = getNextTerm(startDate, "yearly");
+                    numberofmonths += 12;
+                }
+
             }
         }
         if (installmentDetails != null) {

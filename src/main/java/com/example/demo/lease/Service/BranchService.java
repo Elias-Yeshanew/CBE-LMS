@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.lease.Model.Branch;
@@ -14,6 +15,7 @@ import com.example.demo.lease.Model.District;
 import com.example.demo.lease.Repository.BranchRepository;
 import com.example.demo.lease.Repository.DistrictRepository;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
@@ -66,11 +68,17 @@ public class BranchService {
         }
     }
 
-    public Map<String, Object> getAllBranches(int page, int size) {
-        PageRequest pageable = PageRequest.of(page - 1, size); // Adjust the page number
-        Page<Branch> branchPage = branchRepository.findAll(pageable);
-
+    public Map<String, Object> getAllBranches(int page, int size, String sortBy,
+            String sortOrder) {
         Map<String, Object> response = new HashMap<>();
+        Sort.Direction direction = Sort.Direction.ASC;
+        PageRequest pageable;
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
+        }
+        pageable = PageRequest
+                .of(page - 1, size, Sort.by(direction, sortBy));
+        Page<Branch> branchPage = branchRepository.findAll(pageable);
 
         response.put("pagination", PaginationUtil.buildPagination(page, size, branchPage.getTotalElements()));
 
@@ -155,6 +163,34 @@ public class BranchService {
     }
 
     public void deleteBranchById(Long branchId) {
+        if (!branchRepository.existsById(branchId)) {
+            throw new EntityNotFoundException("Branch with id " + branchId + " does not exist.");
+        }
         branchRepository.deleteById(branchId);
+    }
+
+    public Map<String, Object> getBranchsByDistrictId(int page, int size, Long districtId, String sortBy,
+            String sortOrder) {
+        Map<String, Object> response = new HashMap<>();
+        Sort.Direction direction = Sort.Direction.ASC;
+        PageRequest pageable;
+        if (sortOrder != null && sortOrder.equalsIgnoreCase("desc")) {
+            direction = Sort.Direction.DESC;
+        }
+        if (sortBy == null || sortOrder == null) {
+            pageable = PageRequest
+                    .of(page - 1, size);
+        } else {
+            pageable = PageRequest
+                    .of(page - 1, size, Sort.by(direction, sortBy));
+        }
+        pageable = PageRequest
+                .of(page - 1, size, Sort.by(direction, sortBy));
+        Page<Branch> branchPage = branchRepository.findBranchbyDistrict(districtId, pageable);
+        response.put("pagination", PaginationUtil.buildPagination(page, size, branchPage.getTotalElements()));
+        response.put("branches",
+                branchPage.getContent().stream().map(this::mapBranch).collect(Collectors.toList()));
+
+        return response;
     }
 }

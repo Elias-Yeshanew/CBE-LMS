@@ -12,8 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-
-
 @RestController
 @RequestMapping("/districts")
 public class DistrictController {
@@ -96,7 +94,7 @@ public class DistrictController {
     public ResponseEntity<String> deleteDistrictById(@PathVariable Long districtId) {
         try {
             districtService.deleteDistrictById(districtId);
-            return new ResponseEntity<>("District deleted successfully", HttpStatus.OK);
+            return new ResponseEntity<>("District id " + districtId + " deleted successfully", HttpStatus.OK);
         } catch (EmptyResultDataAccessException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {

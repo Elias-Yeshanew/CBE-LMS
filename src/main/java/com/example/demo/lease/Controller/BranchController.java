@@ -20,6 +20,9 @@ import org.springframework.web.bind.annotation.RequestBody; // Add this import
 import com.example.demo.lease.Model.Branch;
 import com.example.demo.lease.Service.BranchService;
 
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.websocket.server.PathParam;
+
 @RestController
 @RequestMapping("/branch")
 public class BranchController {
@@ -42,19 +45,29 @@ public class BranchController {
     @GetMapping("/getAllBranches")
     public ResponseEntity<Map<String, Object>> getAllBranches(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam int size) {
+            @RequestParam int size,
+            @RequestParam(required = false) Long districtId,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortOrder) {
+        Map<String, Object> response = new HashMap<>();
         try {
-            Map<String, Object> response = branchService.getAllBranches(page, size);
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            if (districtId == null) {
+                response = branchService.getAllBranches(page, size, sortBy, sortOrder);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else {
+                response = branchService.getBranchsByDistrictId(page, size, districtId, sortBy, sortOrder);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            }
+
         } catch (Exception e) {
             // Handle exceptions and return an appropriate response
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("timestamp", LocalDateTime.now());
-            errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-            errorResponse.put("error", "Internal Server Error");
-            errorResponse.put("message", e.getMessage());
-            errorResponse.put("path", "/branch/getAllBranches");
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+
+            response.put("timestamp", LocalDateTime.now());
+            response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("error", "Internal Server Error");
+            response.put("message", e.getMessage());
+            response.put("path", "/branch/getAllBranches");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -116,11 +129,28 @@ public class BranchController {
     public ResponseEntity<String> deleteBranchById(@PathVariable Long branchId) {
         try {
             branchService.deleteBranchById(branchId);
-            return new ResponseEntity<>("Branch deleted successfully", HttpStatus.OK);
-        } catch (EmptyResultDataAccessException e) {
+            return ResponseEntity.ok("Branch id " + branchId + " deleted successfully.");
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            // Log the exception details for debugging purposes
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @GetMapping("/getBranchByDistrict/{id}")
+    public ResponseEntity<Map<String, Object>> getBranchsByDistrictId(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam int size,
+            @PathVariable Long id,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortOrder) throws Exception {
+        Map<String, Object> branchData = branchService.getBranchsByDistrictId(page, size, id, sortBy, sortOrder);
+
+        if (branchData != null) {
+            return new ResponseEntity<>(branchData, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 }

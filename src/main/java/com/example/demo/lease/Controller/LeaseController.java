@@ -205,22 +205,18 @@ public class LeaseController {
             @RequestParam(required = false) String sortOrder) {
         try {
             Map<String, Object> response = new HashMap<>();
-            if (sortBy == null || sortOrder == null) {
-                if (startYear != null && endYear != null) {
-                    // Filter between two dates
-                    response = leaseService.getExpiredLeasesByContractYearRange(startYear, endYear, page, size);
-                } else if (startYear != null && endYear == null) {
-                    // Filter with only start date
-                    response = leaseService.getExpiredLeasesByContractYear(startYear, DEFAULT_END_YEAR,
-                            page, size);
-                } else if (startYear == null && endYear != null) {
-                    // Filter with only end date
-                    response = leaseService.getExpiredLeasesByContractYear(DEFAULT_START_YEAR, endYear,
-                            page, size);
-                } else {
-                    // No date filter, get all expired leases
-                    response = leaseService.getAllExpiredLeases(page, size);
-                }
+            if (startYear != null && endYear != null) {
+                // Filter between two dates
+                response = leaseService.getExpiredLeasesByContractYearRange(startYear, endYear, page, size, sortBy,
+                        sortOrder);
+            } else if (startYear != null && endYear == null) {
+                // Filter with only start date
+                response = leaseService.getExpiredLeasesByContractYear(startYear, DEFAULT_END_YEAR,
+                        page, size, sortBy, sortOrder);
+            } else if (startYear == null && endYear != null) {
+                // Filter with only end date
+                response = leaseService.getExpiredLeasesByContractYear(DEFAULT_START_YEAR, endYear,
+                        page, size, sortBy, sortOrder);
             } else if (sortBy != null && sortOrder != null) {
                 if (sortOrder != null && sortBy.equals("branchName")) {
                     response = leaseService.getAllExpiredLeasesSortedByBranchName(page, size,
@@ -230,6 +226,10 @@ public class LeaseController {
                 }
                 // filter with other lease properties like contract start date or contract
                 // registeration date etc
+            } else {
+                // No date filter, get all expired leases
+                response = leaseService.getAllExpiredLeases(page, size);
+
             }
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {

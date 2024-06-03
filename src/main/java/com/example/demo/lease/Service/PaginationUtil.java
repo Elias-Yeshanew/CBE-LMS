@@ -12,7 +12,7 @@ public class PaginationUtil {
         Map<String, Object> pagination = new HashMap<>();
         pagination.put("currentPage", currentPage);
         pagination.put("nextPage", (currentPage * pageSize) < totalResults ? currentPage + 1 : null);
-        pagination.put("previousPage", currentPage - 1);
+        pagination.put("previousPage", currentPage == 0 ? currentPage - 1 : null);
         pagination.put("lastPage", calculateLastPage(pageSize, totalResults));
         pagination.put("currentPageLink", buildPageLink(currentPage, pageSize));
         pagination.put("nextPageLink", buildPageLink(currentPage + 1, pageSize));
@@ -24,7 +24,7 @@ public class PaginationUtil {
             pagination.put("nextPageLink", null);
         }
 
-        if (currentPage <= 0) {
+        if (currentPage == 0) {
             pagination.put("previousPageLink", null);
         }
 
