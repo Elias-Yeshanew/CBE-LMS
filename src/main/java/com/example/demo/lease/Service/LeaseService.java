@@ -816,10 +816,12 @@ public class LeaseService {
     public JSONArray generateReportsForDistrict(String type, String term, int selectedYear, int selectedMonth,
             Long districtId) {
         List<Lease> leasesInDistrict = leaseRepository.findByDistrictIdQuery(districtId);
+
         JSONArray reportsArray = new JSONArray();
 
         for (Lease lease : leasesInDistrict) {
             JSONObject reportObject = generateReportObject(type, term, selectedYear, selectedMonth, lease);
+            // System.out.println(lease.getBranch().getDistrict().ge);
             reportsArray.put(reportObject);
         }
 

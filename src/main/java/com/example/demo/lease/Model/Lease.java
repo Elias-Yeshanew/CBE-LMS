@@ -58,7 +58,6 @@ public class Lease {
     @Column(name = "lease_incentive")
     private BigDecimal leaseIncentive;
 
-
     @Column(name = "authorization", nullable = false)
     private boolean authorization;
 

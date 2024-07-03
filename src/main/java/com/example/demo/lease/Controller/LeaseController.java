@@ -1,26 +1,11 @@
 package com.example.demo.lease.Controller;
 
-import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
-import org.springframework.data.domain.Page;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import com.example.demo.lease.GenerateReportsRequestBody;
-import com.example.demo.lease.Model.Lease;
-import com.example.demo.lease.Service.BranchService;
-import com.example.demo.lease.Service.DistrictService;
-import com.example.demo.lease.Service.LeaseService;
-
-import jakarta.annotation.PostConstruct;
-
 import java.io.IOException;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -29,11 +14,35 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.Files;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.example.demo.lease.GenerateReportsRequestBody;
+import com.example.demo.lease.Model.Lease;
+import com.example.demo.lease.Service.BranchService;
+import com.example.demo.lease.Service.DistrictService;
+import com.example.demo.lease.Service.LeaseService;
+
+import jakarta.annotation.PostConstruct;
 
 @CrossOrigin
 @RestController
@@ -530,37 +539,7 @@ public class LeaseController {
         }
     }
 
-    // @GetMapping("/file/{filename:.+}")
-    // public ResponseEntity<Resource> viewFile(@PathVariable String filename) {
-    // // Get the file path
-    // Path filePath = getFilePath(filename);
-
-    // // Check if the file exists
-    // if (filePath == null || !filePath.toFile().exists()) {
-    // // Handle the case when the file does not exist
-    // return ResponseEntity.notFound().build();
-    // }
-
-    // try {
-    // // Load file as Resource
-    // Resource resource = new org.springframework.core.io.PathResource(filePath);
-
-    // // Set Content-Disposition header to inline (display in browser)
-    // HttpHeaders headers = new HttpHeaders();
-    // headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" +
-    // resource.getFilename());
-
-    // return ResponseEntity.ok()
-    // .headers(headers)
-    // .contentLength(resource.contentLength())
-    // .contentType(MediaType.APPLICATION_OCTET_STREAM)
-    // .body(resource);
-    // } catch (IOException e) {
-    // // Handle exceptions appropriately (e.g., log and return an error response)
-    // e.printStackTrace();
-    // return ResponseEntity.status(500).body(null);
-    // }
-    // }
+    
     @GetMapping("/filess/{filename:.+}")
     public ResponseEntity<Resource> viewFile(@PathVariable String filename) {
         // Get the file path
