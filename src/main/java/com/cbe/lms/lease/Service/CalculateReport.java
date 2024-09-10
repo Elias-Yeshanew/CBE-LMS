@@ -57,14 +57,14 @@ public class CalculateReport {
             }
 
             if (totalPayment == advancePayments) {
-                constDepreciationPerM = totalPayment / calculateContractMonths(startDate, endDate);
+                constDepreciationPerM = totalPayment / monthBetween(startDate, endDate);
             } else {
                 constDepreciationPerM = depreciationPerMonth;
             }
 
         } else {
             if (totalPayment == advancePayment) {
-                constDepreciationPerM = totalPayment / calculateContractMonths(startDate, endDate);
+                constDepreciationPerM = totalPayment / monthBetween(startDate, endDate);
             } else {
                 constDepreciationPerM = depreciationPerMonth;
             }
