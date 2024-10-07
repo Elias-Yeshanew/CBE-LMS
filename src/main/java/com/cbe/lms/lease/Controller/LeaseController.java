@@ -126,57 +126,6 @@ public class LeaseController {
         }
     }
 
-    // @GetMapping
-    // public ResponseEntity<Map<String, Object>> getAllLeasess(
-    // @RequestParam(defaultValue = "1") int page,
-    // @RequestParam int size,
-    // @RequestParam(required = false) String sortBy,
-    // @RequestParam(required = false, defaultValue = "asc") String sortOrder) {
-    // try {
-    // Page<Lease> leases = leaseService.getAllLeasesSorted(page, size, sortBy,
-    // sortOrder);
-    // Map<String, Object> response = new HashMap<>();
-    // response.put("leases", leases.getContent());
-    // response.put("currentPage", leases.getNumber() + 1);
-    // response.put("totalItems", leases.getTotalElements());
-    // response.put("totalPages", leases.getTotalPages());
-    // return new ResponseEntity<>(response, HttpStatus.OK);
-    // } catch (Exception e) {
-    // Map<String, Object> errorResponse = new HashMap<>();
-    // errorResponse.put("timestamp", LocalDateTime.now());
-    // errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-    // errorResponse.put("error", "Internal Server Error");
-    // errorResponse.put("message", e.getMessage());
-    // errorResponse.put("path", "/leases");
-    // return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-    // }
-    // }
-
-    // @GetMapping("/bybranch")
-    // public ResponseEntity<Map<String, Object>> getAllLeases(
-    // @RequestParam(defaultValue = "1") int page,
-    // @RequestParam int size,
-    // @RequestParam(required = false) String sortBy,
-    // @RequestParam(required = false, defaultValue = "asc") String sortOrder) {
-    // try {
-    // Page<Lease> leases = leaseService.getAllLeasesSortedByBranchName(page, size,
-    // "asc");
-    // Map<String, Object> response = new HashMap<>();
-    // response.put("leases", leases.getContent());
-    // response.put("currentPage", leases.getNumber() + 1);
-    // response.put("totalItems", leases.getTotalElements());
-    // response.put("totalPages", leases.getTotalPages());
-    // return new ResponseEntity<>(response, HttpStatus.OK);
-    // } catch (Exception e) {
-    // Map<String, Object> errorResponse = new HashMap<>();
-    // errorResponse.put("timestamp", LocalDateTime.now());
-    // errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-    // errorResponse.put("error", "Internal Server Error");
-    // errorResponse.put("message", e.getMessage());
-    // errorResponse.put("path", "/leases");
-    // return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-    // }
-    // }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getLeaseWithBranchById(@PathVariable Long id) {
@@ -353,6 +302,7 @@ public class LeaseController {
             @RequestParam(required = false, defaultValue = "-1") int selectedYear,
             @RequestParam(required = false, defaultValue = "-1") int selectedMonth,
             @RequestParam(required = false) LocalDate date) {
+        
         return leaseService
                 .generateReportsForAll(requestBody.getType(), requestBody.getTerm(), selectedYear, selectedMonth, date)
                 .toString();
