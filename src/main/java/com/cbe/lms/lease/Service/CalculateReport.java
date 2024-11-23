@@ -18,9 +18,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class CalculateReport {
 
-    
-
-    
     public static String calculateReportM(long Id, LocalDate startDate, LocalDate endDate, double rightOfUse,
             double depreciationPerMonth, String type, double totalPayment, double advancePayment,
             double discountRate, double leaseLiability, LocalDate contractRegisteredDate, String installmentDetails,
