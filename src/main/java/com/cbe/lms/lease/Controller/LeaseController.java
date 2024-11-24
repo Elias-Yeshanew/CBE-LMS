@@ -126,7 +126,6 @@ public class LeaseController {
         }
     }
 
-
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getLeaseWithBranchById(@PathVariable Long id) {
         Map<String, Object> leaseData = leaseService.getLeaseById(id);
@@ -488,7 +487,6 @@ public class LeaseController {
             return ResponseEntity.status(500).body(null);
         }
     }
-
     
     @GetMapping("/filess/{filename:.+}")
     public ResponseEntity<Resource> viewFile(@PathVariable String filename) {
@@ -532,10 +530,6 @@ public class LeaseController {
     }
 
     private Path getFilePath(String filename) {
-        // Implement this method based on your actual logic
-        // It should return the Path to the file or handle non-existent files
-        // appropriately
-        // For now, let's assume the files are stored in the uploadDir
         String uploadDir = storageFolderPath;
         return Paths.get(uploadDir, filename);
     }

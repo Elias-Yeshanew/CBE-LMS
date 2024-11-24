@@ -208,17 +208,6 @@ public class LeaseService {
         return reportsArray;
     }
 
-    static double monthBetweenn(LocalDate startDate, LocalDate endDate) {
-        double averageDaysInMonth = 365.000000000000001 / 12; // Approximate average number of
-
-        // return ChronoUnit.DAYS.between(startDate, endDate) + 1 / 365;
-        return (ChronoUnit.DAYS.between(startDate, endDate)) / averageDaysInMonth;
-        // return ChronoUnit.MONTHS.between(startDate, endDate);
-        // double averageDaysInMonth = 365.25 / 12; // Approximate average number of
-        // days in a month
-        // return ChronoUnit.DAYS.between(startDate, endDate) / averageDaysInMonth;
-    }
-
     private JSONObject generateReportObject(String type, String term, int selectedYear, int selectedMonth,
             Lease report) {
         CalculateReport calculate = new CalculateReport();
@@ -317,7 +306,6 @@ public class LeaseService {
         // Save the Lease entity with serialized JSON data
         return leaseRepository.save(lease);
     }
-
 
     public List<JSONObject> generateReportsForAll(String type, String term, int selectedYear, int selectedMonth,
             LocalDate date) {

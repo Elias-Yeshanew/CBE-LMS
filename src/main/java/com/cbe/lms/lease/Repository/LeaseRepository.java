@@ -64,12 +64,6 @@ public interface LeaseRepository extends JpaRepository<Lease, Long> {
                         @Param("districtId") Long districtId,
                         @Param("contractRegisteredDate") Integer contractRegisteredDate);
 
-        // @Query("SELECT l FROM Lease l WHERE l.branch.district.id = :districtId AND
-        // l.contractRegisteredDate = :registeredDate")
-        // List<Lease> findByDistrictIdAndRegisteredDateQuery(@Param("districtId") Long
-        // districtId,
-        // @Param("registeredDate") LocalDate registeredDate);
-
         @Query("SELECT l FROM Lease l " +
                         "WHERE ((:startYear IS null OR YEAR(l.contractRegisteredDate) = :startYear) " +
                         "AND (:endYear IS null OR YEAR(l.contractEndDate) = :endYear)) " +

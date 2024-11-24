@@ -7,20 +7,20 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cbe.lms.lease.Service.HirerachyService;
+import com.cbe.lms.lease.Service.HierarchyService;
 
 @RestController
 @RequestMapping("/leases")
 public class RegionDistrictBranchController {
 
-    private final HirerachyService hirerachyService;
+    private final HierarchyService hierarchyService;
 
-    public RegionDistrictBranchController(HirerachyService hirerachyService) {
-        this.hirerachyService = hirerachyService;
+    public RegionDistrictBranchController(HierarchyService hierarchyService) {
+        this.hierarchyService = hierarchyService;
     }
 
     @GetMapping("/hierarchy")
     public List<Map<String, Object>> getHierarchy() {
-        return hirerachyService.getRegionHierarchy();
+        return hierarchyService.getRegionHierarchy();
     }
 }

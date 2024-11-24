@@ -16,7 +16,7 @@ import lombok.Setter;
 public class DistrictCsvRepresentation {
     @CsvBindByName(column = "region_id")
     private long id;
-    @CsvBindByName(column = "DistrtictName")
+    @CsvBindByName(column = "DistrictName")
     private String districtName;
 
 }

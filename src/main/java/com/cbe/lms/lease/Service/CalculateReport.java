@@ -184,7 +184,7 @@ public class CalculateReport {
             //             numberOfmonths = monthBetween(startDate, endDate);
             //             leasePayment = futureLeasePayments;
             //             interestExpense = calculateInterestExpense(leaseLiability, discountRate, leasePayment,
-            //                     numberOfmonths);
+            //                     numberMONTHS);
             //             balance = balance + interestExpense - leasePayment;
             //             interestExpensepermonth = interestExpense / 12;
 
@@ -432,6 +432,7 @@ public class CalculateReport {
         return reportObject.toString();
 
     }
+   
     private static void calculateReport(Map<LocalDate, BigDecimal> installmentMap, double leaseLiability,
         double discountRate, JSONArray amortizationArray, JSONArray summaryArray, LocalDate startDate,
         LocalDate endDate, int numberOfInstallment, LocalDate contractRegisteredDate, String reportType) {
@@ -536,7 +537,7 @@ public class CalculateReport {
                 count += 1;
                 if (isFinalInstallment) break;
             }
-        }
+    }
 
     private static JSONObject createReportEntry(String date, double leasePayment, double balance, double interestExpense) {
         JSONObject entry = new JSONObject();
@@ -846,7 +847,8 @@ public class CalculateReport {
         }
         
         return new AbstractMap.SimpleEntry<>(installmentMap, numberOfInstallments);
-}
+    }
+
     public static String calculateReportY(long Id, LocalDate startDate, LocalDate endDate, double rightOfUse,
             double depreciationPerMonth, String type, double totalPayment,
             double advancePayment, double discountRate, double leaseLiability,
@@ -854,7 +856,7 @@ public class CalculateReport {
             long BranchId, String contractType, LocalDate contractStartDates,
             LocalDate contractEndDates, String branchName) {
 
-                String contractTerm = "yearly";
+        String contractTerm = "yearly";
         Entry<Map<LocalDate, BigDecimal>, Integer> result = parseInstallmentDetails(installmentDetails);
         Map<LocalDate, BigDecimal> installmentMap = result.getKey();
         int numberOfInstallments = result.getValue();
@@ -917,17 +919,6 @@ public class CalculateReport {
         // return ChronoUnit.DAYS.between(startDate, endDate) + 1 / 365;
         return (ChronoUnit.DAYS.between(startDate, endDate)) / averageDaysInMonth;
     }
-
-    // static int isBefore(LocalDate startDate, LocalDate targetDate) {
-    //     // Compare the current date with the target date
-    //     if (startDate.isBefore(targetDate)) {
-    //         return -1;
-    //     } else if (startDate.isEqual(targetDate)) {
-    //         return 0;
-    //     } else {
-    //         return 1;
-    //     }
-    // }
 
     static LocalDate getNextTerm(LocalDate date, String type) {
         if (type.equals("yearly")) {

@@ -2,7 +2,8 @@ package com.cbe.lms.lease;
 
 import java.util.List;
 
-public class hirarcyRequset {
+public class hierarchyRequest {
+    
     private List<Long> branchIds;
 
     public List<Long> getBranchIds() {

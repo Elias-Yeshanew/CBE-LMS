@@ -51,9 +51,9 @@ public class BranchService {
         return branch;
     }
 
-    public Branch addNewBranchs(Branch branch) throws Exception {
-        return branchRepository.save(branch);
-    }
+    // public Branch addNewBranchs(Branch branch) throws Exception {
+    //     return branchRepository.save(branch);
+    // }
 
     public Map<String, Object> getBranchById(long branchId) {
         Optional<Branch> optionalBranch = branchRepository.findById(branchId);
@@ -102,35 +102,6 @@ public class BranchService {
 
         return branchData;
     }
-
-    // public Branch updateBranchById(Long branchId, Branch updatedBranch) throws
-    // Exception {
-    // Optional<Branch> optionalBranch = branchRepository.findById(branchId);
-    // if (optionalBranch.isPresent()) {
-    // Branch existingBranch = optionalBranch.get();
-    // // Update fields based on your requirements
-    // existingBranch.setBranchName(updatedBranch.getBranchName());
-    // existingBranch.setBranchCode(updatedBranch.getBranchCode());
-    // existingBranch.setLocation(updatedBranch.getLocation());
-    // existingBranch.setCostCenter(updatedBranch.getCostCenter());
-    // existingBranch.setClaimAccount(updatedBranch.getClaimAccount());
-
-    // // Update the district if it's provided
-    // if (updatedBranch.getDistrict() != null) {
-    // Optional<District> optionalDistrict = districtRepository
-    // .findById(updatedBranch.getDistrict().getDistrictId());
-    // if (optionalDistrict.isPresent()) {
-    // District existingDistrict = optionalDistrict.get();
-    // existingBranch.setDistrict(existingDistrict);
-    // } else {
-    // throw new IllegalArgumentException("District not found");
-    // }
-    // }
-    // return branchRepository.save(existingBranch);
-    // } else {
-    // throw new IllegalArgumentException("Branch not found");
-    // }
-    // }
 
     public Branch updateBranchById(Long branchId, Branch updatedBranch) throws Exception {
         Optional<Branch> optionalExistingBranch = branchRepository.findById(branchId);

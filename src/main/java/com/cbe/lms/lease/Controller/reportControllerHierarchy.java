@@ -10,15 +10,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cbe.lms.lease.Service.ReportServiceHierarchy;
-import com.cbe.lms.lease.hirarcyRequset;
+import com.cbe.lms.lease.hierarchyRequest;
 
 @RestController
 @RequestMapping("/leases")
-public class reportControllerHirerachy {
+public class reportControllerHierarchy {
 
     private final ReportServiceHierarchy reportServiceHierarchy;
 
-    public reportControllerHirerachy(ReportServiceHierarchy reportServiceHierarchy) {
+    public reportControllerHierarchy(ReportServiceHierarchy reportServiceHierarchy) {
         this.reportServiceHierarchy = reportServiceHierarchy;
     }
 
@@ -33,7 +33,7 @@ public class reportControllerHirerachy {
     }
 
     @GetMapping("/hierarchy/branches")
-    public String getBranchHierarchies(@RequestBody hirarcyRequset requestBody) {
+    public String getBranchHierarchies(@RequestBody hierarchyRequest requestBody) {
         return reportServiceHierarchy.getHierarchyForBranches(requestBody.getBranchIds()).toString();
     }
 
