@@ -16,13 +16,13 @@ import com.cbe.lms.lease.Repository.DistrictRepository;
 import com.cbe.lms.lease.Repository.RegionRepository;
 
 @Service
-public class HirerachyService {
+public class HierarchyService {
 
     private final RegionRepository regionRepository;
     private final DistrictRepository districtRepository;
     private final BranchRepository branchRepository;
 
-    public HirerachyService(RegionRepository regionRepository, DistrictRepository districtRepository,
+    public HierarchyService(RegionRepository regionRepository, DistrictRepository districtRepository,
             BranchRepository branchRepository) {
         this.regionRepository = regionRepository;
         this.districtRepository = districtRepository;

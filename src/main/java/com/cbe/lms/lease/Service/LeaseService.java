@@ -234,7 +234,7 @@ public class LeaseService {
         Double rightOfUse = calculate.calculateRightOfUseAsset(advancePayment, leaseLiablity, leaseIncentive,
                 initialDirectCost, installmentDetails, contractRegisteredDate);
         Double depreciationPerMonth = calculate.calculateDepreciationPerMonth(rightOfUse,
-                monthBetweenn(startDate, endDate));
+                CalculateReport.monthBetween(startDate, endDate));
         Long branchId = getBranchIdForLease(id);
         if (branchId == null) {
             // Handle the case where branchId is null, throw an exception, log an error, or
