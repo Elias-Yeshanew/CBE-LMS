@@ -6,7 +6,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -210,7 +209,7 @@ public class LeaseService {
 
     private JSONObject generateReportObject(String type, String term, int selectedYear, int selectedMonth,
             Lease report) {
-        CalculateReport calculate = new CalculateReport();
+        ReportUtility reportUtility = new ReportUtility();
         long id = report.getId();
         LocalDate startDate = report.getContractStartDate();
         LocalDate endDate = report.getContractEndDate();
@@ -229,12 +228,12 @@ public class LeaseService {
         String branchName = report.getBranch().getBranchName();
 
         String contractType = report.getContractType();
-        Double leaseLiablity = calculate.calculateLeaseLiability(totalPayment, advancePayment, discountRate, startDate,
+        Double leaseLiablity = ReportUtility.calculateLeaseLiability(totalPayment, advancePayment, discountRate, startDate,
                 endDate, installmentDetails, contractRegisteredDate);
-        Double rightOfUse = calculate.calculateRightOfUseAsset(advancePayment, leaseLiablity, leaseIncentive,
+        Double rightOfUse = reportUtility.calculateRightOfUseAsset(advancePayment, leaseLiablity, leaseIncentive,
                 initialDirectCost, installmentDetails, contractRegisteredDate);
-        Double depreciationPerMonth = calculate.calculateDepreciationPerMonth(rightOfUse,
-                CalculateReport.monthBetween(startDate, endDate));
+        Double depreciationPerMonth = reportUtility.calculateDepreciationPerMonth(rightOfUse,
+                ReportUtility.monthBetween(startDate, endDate));
         Long branchId = getBranchIdForLease(id);
         if (branchId == null) {
             // Handle the case where branchId is null, throw an exception, log an error, or
@@ -549,7 +548,7 @@ public class LeaseService {
             LocalDate contractStartDate, LocalDate contractEndDate, String installmentDetails,
             LocalDate contractRegisteredDate) {
         // You can now call the method from CalculateReport
-        return calculateReport.calculateLeaseLiability(totalContractPrice, advancePayment, discountRate,
+        return ReportUtility.calculateLeaseLiability(totalContractPrice, advancePayment, discountRate,
                 contractStartDate, contractEndDate, installmentDetails, contractRegisteredDate);
     }
 
