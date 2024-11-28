@@ -80,20 +80,23 @@ public class CalculateReport {
 
         if (ReportUtility.getNextTerm(startDate, "monthly")
                 .equals(ReportUtility.getNextTerm(contractRegisteredDate, "monthly"))) {
-            depreciationF = ReportUtility.monthBetween(startDate, ReportUtility.getNextTerm(contractRegisteredDate, "yearly"))
-                    - (int) ReportUtility.monthBetween(startDate, ReportUtility.getNextTerm(contractRegisteredDate, "yearly"));
+            depreciationF = ReportUtility.monthBetween(startDate,
+                    ReportUtility.getNextTerm(contractRegisteredDate, "yearly"))
+                    - (int) ReportUtility.monthBetween(startDate,
+                            ReportUtility.getNextTerm(contractRegisteredDate, "yearly"));
         } else {
-            depreciationF = ReportUtility.monthBetween(startDate, ReportUtility.getNextTerm(contractRegisteredDate, "monthly"));
+            depreciationF = ReportUtility.monthBetween(startDate,
+                    ReportUtility.getNextTerm(contractRegisteredDate, "monthly"));
         }
 
         depreciationFirst = depreciationF * constDepreciationPerM;
+        Map<LocalDate, BigDecimal> installmentMap = new TreeMap<>();
+        int numberofinstallment = 0;
 
         if (installmentDetails != null) {
 
             JSONObject jsonObject = new JSONObject(installmentDetails);
-            Map<LocalDate, BigDecimal> installmentMap = new TreeMap<>();
-
-            int numberofinstallment = 0;
+            
             for (String key : jsonObject.keySet()) {
                 BigDecimal value = jsonObject.getBigDecimal(key);
                 LocalDate date = LocalDate.parse(key);
@@ -102,13 +105,12 @@ public class CalculateReport {
 
             }
 
-            String contractTerm = "monthly";
-            processInterestExpense(installmentMap, leaseLiability,
-                    discountRate, ammortizationArray, reportArray, startDate,
-                    endDate, numberofinstallment, contractRegisteredDate, contractTerm);
-
         }
-
+        String contractTerm = "monthly";
+        calculateInterestExpense(installmentMap, leaseLiability,
+                discountRate, ammortizationArray, reportArray, startDate,
+                endDate, numberofinstallment, contractRegisteredDate, contractTerm);
+        
         monthBetweens += 2;
         double monthlyBlance = 0;
 
@@ -130,6 +132,7 @@ public class CalculateReport {
             } else if (i == monthBetweens) {
 
                 double depreciationLast = rightOfUse - monthlyBlance;
+
                 JSONObject finalYear = new JSONObject();
                 finalYear.put("year", ReportUtility.getNextTerm(startDate, "monthly").toString());
                 finalYear.put("deprecationExp", depreciationLast);
@@ -167,9 +170,10 @@ public class CalculateReport {
 
         double balance = leaseLiability;
         double leasePayment = 0;
-        double interestExpense = 0;
+        double interestExpense;
         int count = 1;
         int iteration = 0;
+        LocalDate contractStartDates = startDate;
 
         // Determine the period (yearly or monthly) based on reportType
         String period = reportType.equalsIgnoreCase("yearly") ? "yearly" : "monthly";
@@ -183,9 +187,6 @@ public class CalculateReport {
             BigDecimal installmentAmount = entry.getValue();
             double futureLeasePayments = installmentAmount.doubleValue();
 
-            // int timeBetween = reportType.equalsIgnoreCase("yearly")
-            //         ? ReportUtility.yearsBetween(startDate, ReportUtility.getNextTerm(installmentDate, period))
-            //         : (int) ReportUtility.monthBetween(startDate, ReportUtility.getNextTerm(installmentDate, period));
             int timeBetween = ReportUtility.yearsBetween(startDate,
                     ReportUtility.getNextTerm(installmentDate, "yearly"));
 
@@ -198,21 +199,22 @@ public class CalculateReport {
                     JSONObject firstEntry = createReportEntry(contractRegisteredDate.toString(), leasePayment, balance,
                             0.0);
                     amortizationArray.put(firstEntry);
-                    endDate = ReportUtility.getNextTerm(contractRegisteredDate, "yearly");
+                    // endDate = ReportUtility.getNextTerm(contractRegisteredDate, "yearly");
                 } else if (i == timeBetween && isFinalInstallment) {
                     startDate = ReportUtility.getNextTerm(installmentDate, "yearly").minusYears(1);
                     endDate = ReportUtility.getNextTerm(startDate, "yearly");
                     leasePayment = futureLeasePayments;
+               
                     interestExpense = futureLeasePayments - balance;
                     if (period.equals("monthly")) {
                         interestExpense = interestExpense / 12;
-                        startDate = ReportUtility.getNextTerm(startDate, "monthly");
-                        for (int j = 1; j <= 12; j++) {
+                        for (int month = 1; month <= 12; month++) {
+                            startDate = ReportUtility.getNextTerm(startDate, "monthly");
                             JSONObject reportEntry = createReportEntry(startDate.toString(), leasePayment, balance,
                                     interestExpense);
                             amortizationArray.put(reportEntry);
                             summaryArray.put(reportEntry);
-                            startDate = ReportUtility.getNextTerm(startDate, "monthly");
+                            
                         }
                     }
                     JSONObject finalEntry = createReportEntry(endDate.toString(), leasePayment, 0.0, interestExpense);
@@ -229,30 +231,32 @@ public class CalculateReport {
                     balance = balance + interestExpense - futureLeasePayments;
                     if (period.equals("monthly")) {
                         interestExpense = interestExpense / numberOfMonths;
-                        startDate = ReportUtility.getNextTerm(startDate, "monthly");
-                        for (int j = 1; j <= 12; j++) {
+                        for (int month = 1; month <= 12; month++) {
+                            startDate = ReportUtility.getNextTerm(startDate, "monthly");
                             JSONObject reportEntry = createReportEntry(startDate.toString(), leasePayment, balance,
                                     interestExpense);
                             amortizationArray.put(reportEntry);
                             summaryArray.put(reportEntry);
-                            startDate = ReportUtility.getNextTerm(startDate, "monthly");
+                             
                         }
                     }
+
                     JSONObject reportEntry = createReportEntry(endDate.toString(), leasePayment, balance,
                             interestExpense);
                     amortizationArray.put(reportEntry);
                     summaryArray.put(reportEntry);
 
                     leaseLiability = ReportUtility.updateLeaseLiability(leaseLiability, interestExpense, leasePayment);
+                    endDate = ReportUtility.getNextTerm(startDate, "monthly");
+
                 } else if (i == 1 && count == 1 && ReportUtility.getNextTerm(contractRegisteredDate, "yearly")
                         .isEqual(ReportUtility.getNextTerm(installmentDate, "yearly"))) {
                     break;
                 } else if (i == timeBetween && count != numberOfInstallment) {
-                    LocalDate constarDate = ReportUtility.getNextTerm(installmentDate, "yearly").minusYears(1);
 
-                    startDate = constarDate;
+                    startDate = ReportUtility.getNextTerm(installmentDate, "yearly").minusYears(1);;
                     endDate = ReportUtility.getNextTerm(startDate, "yearly");
-                    double numberOfmonths = ReportUtility.monthBetween(constarDate, endDate);
+                    double numberOfmonths = ReportUtility.monthBetween(startDate, endDate);
                     leasePayment = futureLeasePayments;
                     interestExpense = ReportUtility.calculateInterestExpense(leaseLiability, discountRate, leasePayment,
                             numberOfmonths);
@@ -265,30 +269,35 @@ public class CalculateReport {
                                 interestExpense);
                         amortizationArray.put(reportEntry);
                         summaryArray.put(reportEntry);
-                        startDate = ReportUtility.getNextTerm(startDate, "monthly");
+                         
                     }
                     JSONObject reportEntry = createReportEntry(endDate.toString(), leasePayment, balance,
                             interestExpense);
                     amortizationArray.put(reportEntry);
                     summaryArray.put(reportEntry);
-
                     leaseLiability = ReportUtility.updateLeaseLiability(leaseLiability, interestExpense, leasePayment);
                     endDate = ReportUtility.getNextTerm(startDate, "monthly");
                 } else if (i == 1 && count == 1) {
-                    startDate = endDate;
+                    startDate = ReportUtility.getNextTerm(contractRegisteredDate, "monthly");
                     interestExpense = ReportUtility.calculateInterestExpense(initialLeaseLiability, discountRate,
-                            leasePayment, depreciationF);
-                    System.out.println("depreciationF" + depreciationF);
+                            leasePayment, depreciationFY);
+                    double numberOfmonths = ReportUtility.monthBetween(contractStartDates,
+                            ReportUtility.getNextTerm(contractRegisteredDate, "yearly"));
+
                     balance += interestExpense;
                     if (period.equals("monthly")) {
-                        interestExpense = interestExpense / 12;
-                        startDate = ReportUtility.getNextTerm(contractRegisteredDate, "monthly");
-                        for (int j = 1; j <= (int) depreciationFY; j++) {
+                        interestExpense = interestExpense / numberOfmonths;
+                  
+                        double expenceMonths = ReportUtility.monthBetween(contractRegisteredDate,
+                                ReportUtility.getNextTerm(contractRegisteredDate, "yearly"));
+                        for (int month = 1; month < expenceMonths; month++) {
+
                             JSONObject reportEntry = createReportEntry(startDate.toString(), leasePayment, balance,
-                                    interestExpense);
-                            amortizationArray.put(reportEntry);
-                            summaryArray.put(reportEntry);
-                            startDate = ReportUtility.getNextTerm(startDate, "monthly");
+                                        interestExpense);
+                                amortizationArray.put(reportEntry);
+                                summaryArray.put(reportEntry);
+                                startDate = ReportUtility.getNextTerm(startDate, "monthly");
+                                
                         }
                     }
                     JSONObject reportEntry = createReportEntry(startDate.toString(), leasePayment, balance,
@@ -297,13 +306,11 @@ public class CalculateReport {
                     summaryArray.put(reportEntry);
 
                     leaseLiability = ReportUtility.updateLeaseLiability(leaseLiability, interestExpense, leasePayment);
-                    endDate = ReportUtility.getNextTerm(startDate, "yearly");
-                } else if (isFinalInstallment
+                    endDate = startDate;
+                } 
+                else if (isFinalInstallment
                         && !endDate.equals(ReportUtility.getNextTerm(installmentDate, "yearly"))) {
 
-                    //     if (iteration == 0) {
-                    //        startDate = endDate;
-                    //    } 
                     startDate = endDate;
                     endDate = ReportUtility.getNextTerm(startDate, "yearly");
                     double numberOfMonths = ReportUtility.monthBetween(startDate, endDate);
@@ -313,8 +320,7 @@ public class CalculateReport {
                     balance += interestExpense;
                     if (period.equals("monthly")) {
                         interestExpense = interestExpense / numberOfMonths;
-                        System.out.println("startDate " + startDate);
-                        for (int j = 1; j <= 12; j++) {
+                        for (int month = 1; month <= 12; month++) {
 
                             startDate = ReportUtility.getNextTerm(startDate, "monthly");
                             JSONObject reportEntry = createReportEntry(startDate.toString(), leasePayment, balance,
@@ -334,29 +340,30 @@ public class CalculateReport {
 
                     leaseLiability = ReportUtility.updateLeaseLiability(leaseLiability, interestExpense, leasePayment);
                 }
-                // else if (i > 1 && count > 0 && !isFinalInstallment && !endDate.equals(ReportUtility.getNextTerm(installmentDate, "yearly"))) {
-                //     startDate = endDate;
-                //     endDate = ReportUtility.getNextTerm(startDate, "yearly");
-                //     double numberOfMonths = ReportUtility.monthBetween(startDate, endDate);
-                //     interestExpense = ReportUtility.calculateInterestExpense(leaseLiability, discountRate, leasePayment, numberOfMonths);
-                //     balance += interestExpense;
-                //     if (period.equals("monthly")) {
-                //         interestExpense = interestExpense / numberOfMonths;
+                else if (i > 1 && count > 0 && !isFinalInstallment && !endDate.equals(ReportUtility.getNextTerm(installmentDate, "yearly"))) {
+                    startDate = endDate;
+                    endDate = ReportUtility.getNextTerm(startDate, "yearly");
+                    double numberOfMonths = ReportUtility.monthBetween(startDate, endDate);
+                    interestExpense = ReportUtility.calculateInterestExpense(leaseLiability, discountRate, leasePayment, numberOfMonths);
+                    balance += interestExpense;
+                    if (period.equals("monthly")) {
+                        interestExpense = interestExpense / numberOfMonths;
 
-                //         for (int j = 1; j <= 12; j++) {
-                //             startDate = ReportUtility.getNextTerm(startDate, "monthly");
-                //             JSONObject reportEntry = createReportEntry(startDate.toString(), leasePayment, balance, interestExpense);
-                //             amortizationArray.put(reportEntry);
-                //             summaryArray.put(reportEntry);
-                //         }
-                //     }
+                        for (int month = 1; month <= 12; month++) {
+                            startDate = ReportUtility.getNextTerm(startDate, "monthly");
+                            JSONObject reportEntry = createReportEntry(startDate.toString(), leasePayment, balance, interestExpense);
+                            amortizationArray.put(reportEntry);
+                            summaryArray.put(reportEntry);
+                            System.out.println("interestExpense " + interestExpense+" count "+ month);
+                        }
+                    }
 
-                //     JSONObject reportEntry = createReportEntry(startDate.toString(), leasePayment, balance, interestExpense);
-                //     amortizationArray.put(reportEntry);
-                //     summaryArray.put(reportEntry);
+                    JSONObject reportEntry = createReportEntry(startDate.toString(), leasePayment, balance, interestExpense);
+                    amortizationArray.put(reportEntry);
+                    summaryArray.put(reportEntry);
 
-                //     leaseLiability = ReportUtility.updateLeaseLiability(leaseLiability, interestExpense, leasePayment);
-                // }
+                    leaseLiability = ReportUtility.updateLeaseLiability(leaseLiability, interestExpense, leasePayment);
+                }
                 else if (leasePayment == 0 && count == 1 && !ReportUtility.getNextTerm(endDate, "yearly")
                             .isEqual(ReportUtility.getNextTerm(installmentDate, "yearly"))) {
                     startDate = endDate;
@@ -384,143 +391,7 @@ public class CalculateReport {
                 break;
             }
         }
-            // for (Map.Entry<LocalDate, BigDecimal> entry : installmentMap.entrySet()) {
-            //     LocalDate installmentDate = entry.getKey();
-            //     BigDecimal installmentAmount = entry.getValue();
-            //     double futureLeasePayments = installmentAmount.doubleValue();
-            //     int yearsBetween = ReportUtility.yearsBetween(startDate, ReportUtility.getNextTerm(installmentDate, "yearly"));
-
-            //     double initialLeaseLiability = leaseLiability;
-
-            //     // Check if this is the final installment
-            //     boolean isFinalInstallment = count + 1 == numberOfInstallment + 1;
-
-            //     for (int i = 0; i <= yearsBetween; i++) {
-
-            //         if (i == 0 && count == 1) {
-            //             balance = leaseLiability;
-            //             JSONObject finalYear = new JSONObject();
-            //             finalYear.put("year", contractRegisteredDate.toString());
-            //             finalYear.put("interestExpence", "-");
-            //             finalYear.put("leasePayment", leasePayment);
-            //             finalYear.put("balance", balance);
-            //             amortizationArray.put(finalYear);
-            //             endDate = ReportUtility.getNextTerm(contractRegisteredDate, "yearly");
-            //         }
-
-            //         // Handle the calculation for the last installment date and amount
-            //         else if (i == yearsBetween && isFinalInstallment) {
-            //             startDate = ReportUtility.getNextTerm(installmentDate, "yearly").minusYears(1);
-            //             endDate = ReportUtility.getNextTerm(startDate, "yearly");
-            //             leasePayment = futureLeasePayments;
-            //             leaseLiability = ReportUtility.updateLeaseLiability(leaseLiability, interestExpense, leasePayment);
-            //             interestExpense = futureLeasePayments - balance;
-            //             JSONObject reportEntry = new JSONObject();
-            //             reportEntry.put("year", endDate.toString());
-            //             reportEntry.put("leasePayment", leasePayment);
-            //             reportEntry.put("balance", "-");
-            //             reportEntry.put("interestExpence", interestExpense);
-            //             amortizationArray.put(reportEntry);
-            //             summaryArray.put(reportEntry);
-
-            //             // Break the loop to prevent further interest calculation after the final installment
-            //             break;
-            //         }
-
-            //         // Skip for the first iteration if the dates match
-            //         else if (i == 1 && count == 1 && ReportUtility.getNextTerm(contractRegisteredDate, "yearly")
-            //                 .isEqual(ReportUtility.getNextTerm(installmentDate, "yearly"))) {
-            //             continue;
-            //         }
-
-            //         // Calculate for the rest of the installments (excluding the last one)
-            //         else if (i == yearsBetween && !isFinalInstallment) {
-            //             startDate = ReportUtility.getNextTerm(installmentDate, "yearly").minusYears(1);
-            //             endDate = ReportUtility.getNextTerm(startDate, "yearly");
-            //             double numberOfMonths = ReportUtility.monthBetween(startDate, endDate);
-            //             leasePayment = futureLeasePayments;
-            //             interestExpense = ReportUtility.calculateInterestExpense(leaseLiability, discountRate, leasePayment,
-            //                     numberOfMonths);
-            //             balance = balance + interestExpense - futureLeasePayments;
-
-            //             JSONObject reportEntry = new JSONObject();
-            //             reportEntry.put("year", endDate.toString());
-            //             reportEntry.put("leasePayment", leasePayment);
-            //             reportEntry.put("balance", balance);
-            //             reportEntry.put("interestExpence", interestExpense);
-            //             leaseLiability = ReportUtility.updateLeaseLiability(leaseLiability, interestExpense, leasePayment);
-            //             amortizationArray.put(reportEntry);
-            //             endDate = ReportUtility.getNextTerm(endDate, "yearly");
-            //             summaryArray.put(reportEntry);
-            //         }
-
-            //         // Handle the calculation for the first installment period
-            //         else if (i == 1 && count == 1) {
-            //             startDate = endDate;
-            //             interestExpense = ReportUtility.calculateInterestExpense(initialLeaseLiability, discountRate, leasePayment,
-            //                     depreciationF);
-            //             balance += interestExpense;
-
-            //             JSONObject reportEntry = new JSONObject();
-            //             reportEntry.put("year", startDate.toString());
-            //             reportEntry.put("balance", balance);
-            //             reportEntry.put("interestExpence", interestExpense);
-            //             amortizationArray.put(reportEntry);
-            //             summaryArray.put(reportEntry);
-
-            //             leaseLiability = ReportUtility.updateLeaseLiability(leaseLiability, interestExpense, leasePayment);
-            //             endDate = ReportUtility.getNextTerm(startDate, "yearly");
-            //         }
-
-            //         // Process final interest calculations if no future payments remain
-            //         else if (isFinalInstallment && !endDate.equals(ReportUtility.getNextTerm(installmentDate, "yearly"))) {
-            //             startDate = endDate;
-            //             endDate = ReportUtility.getNextTerm(startDate, "yearly");
-            //             double numberOfMonths = ReportUtility.monthBetween(startDate, endDate);
-            //             leasePayment = 0;
-
-            //             interestExpense = ReportUtility.calculateInterestExpense(leaseLiability, discountRate, leasePayment,
-            //                     numberOfMonths);
-            //             balance += interestExpense;
-
-            //             JSONObject reportEntry = new JSONObject();
-            //             reportEntry.put("year", startDate.toString());
-            //             reportEntry.put("balance", balance);
-            //             reportEntry.put("interestExpence", interestExpense);
-            //             amortizationArray.put(reportEntry);
-            //             summaryArray.put(reportEntry);
-
-            //             leaseLiability = ReportUtility.updateLeaseLiability(leaseLiability, interestExpense, leasePayment);
-            //         }
-
-            //         // Handle intermediate years' interest calculations
-            //         else if (i > 1 && count > 0 && !isFinalInstallment
-            //                 && !endDate.equals(ReportUtility.getNextTerm(installmentDate, "yearly"))) {
-            //             startDate = endDate;
-            //             endDate = ReportUtility.getNextTerm(startDate, "yearly");
-            //             double numberOfMonths = ReportUtility.monthBetween(startDate, endDate);
-            //             interestExpense = ReportUtility.calculateInterestExpense(leaseLiability, discountRate, leasePayment,
-            //                     numberOfMonths);
-            //             balance += interestExpense;
-
-            //             JSONObject reportEntry = new JSONObject();
-            //             reportEntry.put("year", startDate.toString());
-            //             reportEntry.put("balance", balance);
-            //             reportEntry.put("interestExpence", interestExpense);
-            //             amortizationArray.put(reportEntry);
-            //             summaryArray.put(reportEntry);
-
-            //             leaseLiability = ReportUtility.updateLeaseLiability(leaseLiability, interestExpense, leasePayment);
-            //         }
-            //     }
-
-            //         count += 1;
-
-            //         // Exit the outer loop after processing the final installment
-            //         if (isFinalInstallment) {
-            //             break;
-            //     }
-            // }
+            
     }
 
     private static JSONObject createReportEntry(String date, double leasePayment, double balance, double interestExpense) {
@@ -633,14 +504,6 @@ public class CalculateReport {
         }
     }
 
-    private static void processInterestExpense(Map<LocalDate, BigDecimal> installmentMap, double leaseLiability,
-            double discountRate, JSONArray amortizationArray, JSONArray summaryArray, LocalDate startDate,
-            LocalDate endDate, int numberofinstallment, LocalDate contractRegisteredDate, String contractTerm) {
-
-        calculateInterestExpense(installmentMap, leaseLiability, discountRate, amortizationArray,
-                summaryArray, startDate, endDate, numberofinstallment, contractRegisteredDate, contractTerm);
-
-    }
 
     private static double[] calculateDepreciation(double totalPayment, double advancePayment,
             double depreciationPerMonth,
@@ -715,7 +578,7 @@ public class CalculateReport {
 
         generateDepreciationReport(startDate, endDate, rightOfUse, constDepreciationPerY, constDepreciationPerM,
                 reportArray, summaryArray, contractRegisteredDate);
-        processInterestExpense(installmentMap, leaseLiability, discountRate, ammortizationArray, summaryArray,
+        calculateInterestExpense(installmentMap, leaseLiability, discountRate, ammortizationArray, summaryArray,
                 contractStartDates, contractEndDates, numberOfInstallments, contractRegisteredDate, contractTerm);
 
         JSONObject reportObject = new JSONObject();

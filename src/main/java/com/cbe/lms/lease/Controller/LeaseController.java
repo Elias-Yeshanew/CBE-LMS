@@ -320,19 +320,19 @@ public class LeaseController {
     }
 
     @PostMapping("/file")
-    public ResponseEntity<?> uploadImage(
-            @RequestPart("file") MultipartFile imageFile) {
+    public ResponseEntity<?> uploadFiles(
+            @RequestPart("file") MultipartFile file) {
 
         // Assuming you have a storage folder path defined in your properties
-        String storageFolderPath = uploadDir;
+        // String storageFolderPath = uploadDir;
 
         try {
             // Get the original filename
-            String fileNameVariable = imageFile.getOriginalFilename();
+            String fileNameVariable = file.getOriginalFilename();
 
             // Move the file to the storage folder
             Path destinationPath = Paths.get(storageFolderPath, fileNameVariable);
-            Files.copy(imageFile.getInputStream(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(file.getInputStream(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
 
             // Prepare the response
             Map<String, String> response = new HashMap<>();
@@ -343,7 +343,7 @@ public class LeaseController {
             return ResponseEntity.ok(response);
 
         } catch (IOException e) {
-            e.printStackTrace(); // Handle the exception appropriately
+            // e.printStackTrace(); // Handle the exception appropriately
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("message", "File upload failed"));
         }
