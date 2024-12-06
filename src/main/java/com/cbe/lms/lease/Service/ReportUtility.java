@@ -14,7 +14,7 @@ import java.util.TreeMap;
 import org.json.JSONObject;
 
 public class ReportUtility {
-    
+
     static LocalDate getNextTerm(LocalDate date, String type) {
         if (type.equals("yearly")) {
             int currentYear = date.getYear();
@@ -50,7 +50,7 @@ public class ReportUtility {
     public static double calculateDaysBetween(LocalDate startDate, LocalDate endDate) {
         return (int) ChronoUnit.DAYS.between(startDate, endDate);
     }
-    
+
     public static int yearsBetween(LocalDate startDate, LocalDate endDate) {
         Period period = Period.between(startDate, endDate);
         int yearbetween;
@@ -78,7 +78,6 @@ public class ReportUtility {
         double futureLeasePayments = totalContractPrice - advancePayment;
 
         if (installmentDetails != null) {
-
 
             Entry<Map<LocalDate, BigDecimal>, Integer> result = parseInstallmentDetails(installmentDetails);
             Map<LocalDate, BigDecimal> installmentMap = result.getKey();
@@ -162,7 +161,7 @@ public class ReportUtility {
 
         return outstandingLeaseLiability - leasePayment + interestExpense;
     }
-    
+
     public static Entry<Map<LocalDate, BigDecimal>, Integer> parseInstallmentDetails(String installmentDetails) {
 
         Map<LocalDate, BigDecimal> installmentMap = new TreeMap<>();
